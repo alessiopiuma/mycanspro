@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>myCansPRO — Collezione Lattine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e0f;
+  --bg2: #161618;
+  --bg3: #1e1e21;
+  --bg4: #27272b;
+  --line: rgba(255,255,255,0.07);
+  --line2: rgba(255,255,255,0.13);
+  --accent: #e3ff00;
+  --accent2: #ff6b35;
+  --accent3: #47d4ff;
+  --text: #f0f0ee;
+  --text2: #8a8a8e;
+  --text3: #555558;
+  --red: #ff4545;
+  --green: #3ddc84;
+  --radius: 12px;
+  --radius-sm: 7px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+
+/* NOISE TEXTURE */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:.6}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:50;padding:0}
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--line)}
+.logo-mark{display:flex;align-items:baseline;gap:0;line-height:1;white-space:nowrap}
+.logo-my{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:300;color:var(--text);letter-spacing:-0.3px}
+.logo-cans{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+.logo-pro{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;color:var(--accent);letter-spacing:-0.3px}
+.logo-tagline{font-size:10px;color:var(--text3);margin-top:5px;letter-spacing:0.2px}
+.logo-sub{display:none}
+.nav{padding:16px 12px;flex:1;overflow-y:auto}
+.nav-section{margin-bottom:24px}
+.nav-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);padding:0 8px;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;border:1px solid transparent;margin-bottom:2px;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);border-color:rgba(232,255,71,0.15)}
+.nav-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.nav-item .count{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;background:var(--bg4);padding:1px 7px;border-radius:20px;color:var(--text3)}
+.nav-item.active .count{background:rgba(232,255,71,0.15);color:var(--accent)}
+.sidebar-footer{padding:16px;border-top:1px solid var(--line)}
+.stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-mini{background:var(--bg3);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--line)}
+.stat-mini-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1}
+.stat-mini-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* MAIN */
+.main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{padding:20px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:40;backdrop-filter:blur(12px)}
+.topbar-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--text);flex-shrink:0}
+.search-box{flex:1;max-width:380px;position:relative}
+.search-box input{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px 8px 36px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.search-box input:focus{border-color:var(--line2)}
+.search-box input::placeholder{color:var(--text3)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;border:1px solid transparent;font-weight:500}
+.btn-primary{background:var(--accent);color:#0e0e0f;border-color:var(--accent)}
+.btn-primary:hover{background:#d4e83e}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--line2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(255,69,69,0.3)}
+.btn-danger:hover{background:rgba(255,69,69,0.1)}
+.btn-sm{padding:5px 11px;font-size:12px}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;gap:2px;border:1px solid var(--line)}
+.view-btn{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);transition:all .15s;border:none;background:transparent}
+.view-btn.active{background:var(--bg4);color:var(--text)}
+
+/* CONTENT */
+.content{padding:24px 28px;flex:1}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-header h2{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--text2)}
+.sort-select{background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);padding:5px 10px;color:var(--text2);font-size:12px;cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.grid.list-view{grid-template-columns:1fr}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.card:hover .card-overlay{opacity:1}
+.card-img{width:100%;height:160px;object-fit:contain;background:var(--bg3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.card-img img{width:100%;height:100%;object-fit:contain;transition:transform .3s}
+.card:hover .card-img img{transform:scale(1.04)}
+.card-img .no-img{font-size:48px;opacity:.25}
+.card-img .img-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 60%,rgba(14,14,15,0.8));opacity:0;transition:opacity .2s}
+.card:hover .img-overlay{opacity:1}
+.card-overlay{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:opacity .2s;z-index:5}
+.card-overlay-btn{width:30px;height:30px;border-radius:50%;background:rgba(14,14,15,0.85);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all .15s;backdrop-filter:blur(8px)}
+.card-overlay-btn:hover{background:var(--bg4);color:var(--text)}
+.card-body{padding:12px}
+.card-brand{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.card-name{font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.card-meta{display:flex;align-items:center;justify-content:space-between}
+.card-year{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.card-cond{font-size:10px;padding:2px 8px;border-radius:10px}
+.cond-mint{background:rgba(61,220,132,0.12);color:var(--green)}
+.cond-ottima{background:rgba(71,212,255,0.12);color:var(--accent3)}
+.cond-buona{background:rgba(232,255,71,0.12);color:var(--accent)}
+.cond-discreta{background:rgba(255,107,53,0.1);color:var(--accent2)}
+.cond-restaurare{background:rgba(255,69,69,0.1);color:var(--red)}
+.card-flags{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.flag{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg4);color:var(--text3);border:1px solid var(--line)}
+
+/* LIST VIEW CARD */
+.grid.list-view .card{display:flex;flex-direction:row}
+.grid.list-view .card-img{width:80px;height:80px;flex-shrink:0;border-radius:0}
+.grid.list-view .card-body{flex:1;display:flex;align-items:center;gap:16px;padding:12px 16px}
+.grid.list-view .card-info{flex:1}
+.grid.list-view .card-name{margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid.list-view .card-meta{flex-direction:column;align-items:flex-end;gap:4px}
+.grid.list-view .card-flags{margin-top:0}
+
+/* EMPTY */
+.empty{text-align:center;padding:5rem 2rem;color:var(--text3)}
+.empty-icon{font-size:56px;margin-bottom:16px;opacity:.3}
+.empty h3{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text2);margin-bottom:8px;letter-spacing:1px}
+.empty p{font-size:13px;max-width:300px;margin:0 auto 20px}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:5}
+.modal-header h2{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--text)}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--line);cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;transition:all .15s}
+.modal-close:hover{background:var(--bg4);color:var(--text)}
+.modal-body{padding:20px 24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(232,255,71,0.4)}
+.field textarea{resize:vertical;min-height:72px}
+.field select option{background:var(--bg3)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.photo-drop{border:1.5px dashed var(--line2);border-radius:var(--radius);height:140px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s;background:var(--bg3)}
+.photo-drop:hover{border-color:rgba(232,255,71,0.4)}
+.photo-drop img{width:100%;height:100%;object-fit:contain}
+.photo-drop-label{text-align:center;pointer-events:none}
+.photo-drop-label .icon{font-size:28px;margin-bottom:8px;opacity:.3}
+.photo-drop-label p{font-size:12px;color:var(--text3)}
+.photo-drop-label span{color:var(--accent);font-size:11px}
+.rating-stars{display:flex;gap:4px;margin-top:2px}
+.star{font-size:18px;cursor:pointer;color:var(--text3);transition:color .1s;line-height:1}
+.star.active{color:#f5c518}
+.star:hover{color:#f5c518}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+
+/* DETAIL MODAL */
+.detail-modal{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;animation:slideUp .2s ease}
+.detail-hero{position:relative;background:var(--bg3);border-radius:12px 12px 0 0;overflow:hidden}
+.detail-hero-img{width:100%;height:260px;object-fit:contain;display:block}
+.detail-hero-placeholder{width:100%;height:260px;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:.15}
+.detail-hero-overlay{position:absolute;bottom:0;left:0;right:0;padding:16px 20px;background:linear-gradient(to top,rgba(14,14,15,0.95),transparent)}
+.detail-hero-brand{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:2px}
+.detail-hero-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--text);line-height:1.1}
+.detail-content{padding:20px}
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.detail-item{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;border:1px solid var(--line)}
+.detail-item-key{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.detail-item-val{font-size:14px;font-weight:500;color:var(--text)}
+.detail-item-val.accent{color:var(--accent);font-family:'DM Mono',monospace}
+.detail-note{background:var(--bg3);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--text2);line-height:1.6;border:1px solid var(--line);margin-bottom:16px;border-left:3px solid var(--accent)}
+.detail-note-empty{color:var(--text3);font-style:italic}
+.detail-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.detail-tag{padding:4px 12px;border-radius:20px;font-size:11px;background:var(--bg4);color:var(--text2);border:1px solid var(--line)}
+.detail-footer{display:flex;gap:8px;justify-content:flex-end}
+.stars-display{display:flex;gap:3px}
+.stars-display .s{font-size:14px;color:var(--text3)}
+.stars-display .s.on{color:#f5c518}
+
+/* STATS PAGE */
+.stats-page{padding:24px 28px}
+.stats-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.05}
+.stat-card.c1::before{background:var(--accent)}
+.stat-card.c2::before{background:var(--accent3)}
+.stat-card.c3::before{background:var(--accent2)}
+.stat-card.c4::before{background:var(--green)}
+.stat-card-n{font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;margin-bottom:4px}
+.stat-card.c1 .stat-card-n{color:var(--accent)}
+.stat-card.c2 .stat-card-n{color:var(--accent3)}
+.stat-card.c3 .stat-card-n{color:var(--accent2)}
+.stat-card.c4 .stat-card-n{color:var(--green)}
+.stat-card-l{font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+.chart-box{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.chart-box h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text2);margin-bottom:16px}
+.bar-item{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-label{font-size:12px;color:var(--text2);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .6s ease}
+.bar-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);width:24px;text-align:right;flex-shrink:0}
+.timeline-row{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.timeline-row h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text2);margin-bottom:16px}
+.timeline-grid{display:flex;gap:8px;align-items:flex-end;min-height:100px}
+.timeline-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:32px}
+.timeline-bar{width:100%;border-radius:4px 4px 0 0;background:var(--bg4);transition:height .6s ease;min-height:4px;cursor:pointer;position:relative;border:1px solid var(--line)}
+.timeline-bar:hover{background:var(--accent);border-color:var(--accent)}
+.timeline-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg4);color:var(--text);font-size:10px;padding:3px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;border:1px solid var(--line2)}
+.timeline-year{font-size:9px;color:var(--text3);writing-mode:vertical-lr;transform:rotate(180deg)}
+.cond-dist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cond-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--line)}
+.cond-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cond-text{flex:1;font-size:12px;color:var(--text2)}
+.cond-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+
+/* IMPORT/EXPORT */
+.io-section{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.io-section h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text2);margin-bottom:12px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg4);border:1px solid var(--line2);border-radius:var(--radius-sm);padding:12px 18px;font-size:13px;color:var(--text);z-index:999;display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s;max-width:300px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(61,220,132,0.4)}
+.toast.success .toast-dot{background:var(--green)}
+.toast.error{border-color:rgba(255,69,69,0.4)}
+.toast.error .toast-dot{background:var(--red)}
+.toast-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{width:0;transform:translateX(-100%);transition:transform .25s;z-index:60}
+  .sidebar.open{width:220px;transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:55}
+  .sidebar-overlay.open{display:block}
+  .main{margin-left:0}
+  .topbar{padding:12px 16px;gap:10px}
+  .topbar-title{font-size:16px}
+  .search-box{max-width:none;flex:1}
+  .search-box input{font-size:12px;padding:7px 10px 7px 32px}
+  .topbar-actions{gap:6px}
+  .sort-select{display:none}
+  .view-toggle{display:none}
+  .btn-primary span{display:none}
+  .btn-primary{padding:8px 10px}
+  .btn-menu{display:flex}
+  .content{padding:14px 16px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .grid.list-view .card-img{width:64px;height:64px}
+  .stats-hero{grid-template-columns:repeat(2,1fr)}
+  .charts-row{grid-template-columns:1fr}
+  .stats-page{padding:14px 16px}
+  .detail-grid{grid-template-columns:repeat(2,1fr)}
+  .modal{max-width:100%;border-radius:14px 14px 0 0;margin-top:auto}
+  .modal-bg{align-items:flex-end;padding:0}
+  .detail-modal{max-width:100%;border-radius:14px 14px 0 0;margin-top:auto}
+  .field-row{grid-template-columns:1fr}
+  .field-row3{grid-template-columns:1fr 1fr}
+  .logo-mark{font-size:16px}
+  .logo-tagline{display:none}
+  .sidebar-footer .stats-mini{display:none}
+  .nav-label{display:block}
+  .nav-item span,.nav-item .count{display:flex}
+}
+@media(min-width:769px){
+  .btn-menu{display:none}
+  .sidebar-overlay{display:none}
+}
+/* BOTTOM NAV MOBILE */
+@media(max-width:480px){
+  .main{padding-bottom:64px}
+  .bottom-nav{display:flex}
+}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--line);z-index:50;padding:0 8px env(safe-area-inset-bottom,0)}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:transparent;transition:color .15s}
+.bnav-item.active{color:var(--accent)}
+.bnav-item svg{transition:transform .15s}
+.bnav-item.active svg{transform:scale(1.1)}
+
+/* ANIMATIONS */
+.card{animation:fadeIn .25s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar-el">
+  <div class="logo">
+    <div class="logo-mark">
+      <span class="logo-my">my</span><span class="logo-cans">cans</span><span class="logo-pro">PRO</span>
+    </div>
+    <div class="logo-tagline">Gestione Collezione Lattine</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">
+      <div class="nav-label">Viste</div>
+      <a class="nav-item active" onclick="showView('collection')" href="#">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        <span>Collezione</span>
+        <span class="count" id="navTotal">0</span>
+      </a>
+      <a class="nav-item" onclick="showView('stats')" href="#">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
+        <span>Statistiche</span>
+      </a>
+      <a class="nav-item" onclick="showView('io')" href="#">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10a1 1 0 011 1v0a1 1 0 01-1 1H3a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>
+        <span>Import / Export</span>
+      </a>
+    </div>
+    <div class="nav-section" id="brandNav">
+      <div class="nav-label">Brand</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="stats-mini">
+      <div class="stat-mini"><div class="stat-mini-n" id="sTotal">0</div><div class="stat-mini-l">Lattine</div></div>
+      <div class="stat-mini"><div class="stat-mini-n" id="sBrands">0</div><div class="stat-mini-l">Brand</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="viewTitle">Collezione</div>
+    <div class="search-box" id="searchArea">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+      <input type="text" id="searchInput" placeholder="Cerca brand, modello, paese...">
+    </div>
+    <div class="topbar-actions" id="topbarActions">
+      <button class="btn btn-ghost btn-menu" id="menuBtn" onclick="toggleSidebar()" title="Menu" style="padding:8px 10px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+      </button>
+      <div class="view-toggle">
+        <button class="view-btn active" id="gridBtn" onclick="setView('grid')" title="Griglia">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        </button>
+        <button class="view-btn" id="listBtn" onclick="setView('list')" title="Lista">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h10"/></svg>
+        </button>
+      </div>
+      <select class="sort-select" id="sortSel" onchange="render()">
+        <option value="newest">Aggiunta recente</option>
+        <option value="name">Nome A-Z</option>
+        <option value="brand">Brand A-Z</option>
+        <option value="year-desc">Anno ↓</option>
+        <option value="year-asc">Anno ↑</option>
+        <option value="rating">Valutazione</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAdd()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M2 8h12"/></svg>
+        Aggiungi
+      </button>
+    </div>
+  </div>
+
+  <!-- COLLECTION VIEW -->
+  <div id="viewCollection" class="content">
+    <div class="section-header">
+      <h2 id="collectionSubtitle">Tutte le lattine</h2>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="emptyMsg" style="display:none">
+      <div class="empty-icon">🥫</div>
+      <h3>Nessuna lattina trovata</h3>
+      <p>Inizia ad aggiungere la tua collezione oppure modifica i filtri di ricerca</p>
+      <button class="btn btn-primary" onclick="openAdd()">Aggiungi la prima</button>
+    </div>
+  </div>
+
+  <!-- STATS VIEW -->
+  <div id="viewStats" class="stats-page" style="display:none">
+    <div class="stats-hero">
+      <div class="stat-card c1"><div class="stat-card-n" id="stTotal">0</div><div class="stat-card-l">Totale Lattine</div></div>
+      <div class="stat-card c2"><div class="stat-card-n" id="stBrands">0</div><div class="stat-card-l">Brand Diversi</div></div>
+      <div class="stat-card c3"><div class="stat-card-n" id="stCountries">0</div><div class="stat-card-l">Paesi</div></div>
+      <div class="stat-card c4"><div class="stat-card-n" id="stWithPhoto">0</div><div class="stat-card-l">Con Foto</div></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-box">
+        <h3>Per Brand</h3>
+        <div id="brandChart"></div>
+      </div>
+      <div class="chart-box">
+        <h3>Condizioni</h3>
+        <div class="cond-dist" id="condChart"></div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <h3>Per Anno di Produzione</h3>
+      <div class="timeline-grid" id="timelineChart"></div>
+    </div>
+  </div>
+
+  <!-- IO VIEW -->
+  <div id="viewIo" style="display:none;padding:24px 28px">
+    <div class="io-section">
+      <h3>Esporta Collezione</h3>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Scarica tutti i dati della collezione in formato JSON.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="exportJSON()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
+          Esporta JSON
+        </button>
+        <button class="btn btn-ghost" onclick="exportCSV()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
+          Esporta CSV
+        </button>
+      </div>
+    </div>
+    <div class="io-section">
+      <h3>Importa Collezione</h3>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Importa un file JSON precedentemente esportato. I dati esistenti verranno mantenuti.</p>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
+      <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14V6M5 9l3-3 3 3M3 4h10"/></svg>
+        Importa JSON
+      </button>
+    </div>
+    <div class="io-section">
+      <h3>Dati</h3>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Cancella definitivamente tutta la collezione. Azione irreversibile.</p>
+      <button class="btn btn-danger" onclick="clearAll()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
+        Cancella tutto
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Nuova Lattina</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Foto</label>
+        <div class="photo-drop" id="photoDrop" onclick="document.getElementById('photoFile').click()">
+          <div class="photo-drop-label">
+            <div class="icon">📸</div>
+            <p>Clicca per caricare</p>
+            <span>JPG, PNG, WEBP</span>
+          </div>
+        </div>
+        <input type="file" id="photoFile" accept="image/*" style="display:none" onchange="loadPhoto(this)">
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Brand *</label><input type="text" id="fBrand" placeholder="es. Coca-Cola"></div>
+        <div class="field"><label>Modello / Variante *</label><input type="text" id="fModel" placeholder="es. Edizione Mondiale 1990"></div>
+      </div>
+      <div class="field-row3">
+        <div class="field"><label>Anno</label><input type="text" id="fYear" placeholder="1994" maxlength="4"></div>
+        <div class="field"><label>Paese</label><input type="text" id="fCountry" placeholder="Italia"></div>
+        <div class="field"><label>Volume (ml)</label><input type="text" id="fVolume" placeholder="330"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Condizioni</label>
+          <select id="fCond">
+            <option value="">— seleziona —</option>
+            <option value="Mint (perfetta)">Mint (perfetta)</option>
+            <option value="Ottima">Ottima</option>
+            <option value="Buona">Buona</option>
+            <option value="Discreta">Discreta</option>
+            <option value="Da restaurare">Da restaurare</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <select id="fCat">
+            <option value="">— seleziona —</option>
+            <option value="Cola">Cola</option>
+            <option value="Birra">Birra</option>
+            <option value="Succo">Succo</option>
+            <option value="Energy Drink">Energy Drink</option>
+            <option value="Acqua">Acqua</option>
+            <option value="Altra bibita">Altra bibita</option>
+            <option value="Altro">Altro</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Valore stimato (€)</label>
+          <input type="text" id="fValue" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Provenienza</label>
+          <input type="text" id="fSource" placeholder="Mercatino, online...">
+        </div>
+      </div>
+      <div class="field">
+        <label>Valutazione personale</label>
+        <div class="rating-stars" id="ratingStars">
+          <span class="star" data-v="1" onclick="setRating(1)">★</span>
+          <span class="star" data-v="2" onclick="setRating(2)">★</span>
+          <span class="star" data-v="3" onclick="setRating(3)">★</span>
+          <span class="star" data-v="4" onclick="setRating(4)">★</span>
+          <span class="star" data-v="5" onclick="setRating(5)">★</span>
+        </div>
+      </div>
+      <div class="field"><label>Note</label><textarea id="fNotes" placeholder="Provenienza, storia, curiosità, dettagli particolari..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btnDel" style="display:none;margin-right:auto" onclick="deleteCan()">Elimina</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveCan()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-bg" id="detailModal">
+  <div class="detail-modal">
+    <div class="detail-hero" id="dHero"></div>
+    <div class="detail-content">
+      <div class="detail-grid" id="dGrid"></div>
+      <div id="dNoteWrap"></div>
+      <div class="detail-tags" id="dTags"></div>
+      <div class="detail-footer">
+        <button class="btn btn-ghost btn-sm" onclick="editFromDetail()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+          Modifica
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="closeDetail()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav">
+  <button class="bnav-item active" id="bn-collection" onclick="showView('collection');closeSidebarMobile()">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    Collezione
+  </button>
+  <button class="bnav-item" id="bn-stats" onclick="showView('stats');closeSidebarMobile()">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
+    Statistiche
+  </button>
+  <button class="bnav-item" onclick="openAdd()" style="color:var(--accent)">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 4v8M4 8h8"/></svg>
+    Aggiungi
+  </button>
+  <button class="bnav-item" id="bn-io" onclick="showView('io');closeSidebarMobile()">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
+    Export
+  </button>
+  <button class="bnav-item" onclick="toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    Brand
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
+
+<script>
+let cans = JSON.parse(localStorage.getItem('canvault_v2') || '[]');
+let currentPhoto = null, editId = null, detailId = null, currentRating = 0;
+let viewMode = 'grid', activeBrand = 'all', currentPage = 'collection';
+
+function save(){ localStorage.setItem('canvault_v2', JSON.stringify(cans)); }
+
+function toast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function getBrands(){ return [...new Set(cans.map(c=>c.brand))].sort(); }
+
+function condClass(c){
+  if(!c) return '';
+  if(c.includes('Mint')) return 'cond-mint';
+  if(c.includes('Ottima')) return 'cond-ottima';
+  if(c.includes('Buona')) return 'cond-buona';
+  if(c.includes('Discreta')) return 'cond-discreta';
+  return 'cond-restaurare';
+}
+function condColor(c){
+  if(!c) return '#555558';
+  if(c.includes('Mint')) return '#3ddc84';
+  if(c.includes('Ottima')) return '#47d4ff';
+  if(c.includes('Buona')) return '#e8ff47';
+  if(c.includes('Discreta')) return '#ff6b35';
+  return '#ff4545';
+}
+
+function starsHtml(r,small=false){
+  if(!r) return '';
+  const sz = small ? 12 : 14;
+  return Array.from({length:5},(_,i)=>`<span class="s ${i<r?'on':''}" style="font-size:${sz}px">★</span>`).join('');
+}
+
+function getFiltered(){
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const sort = document.getElementById('sortSel').value;
+  let list = cans.filter(c=>{
+    const mb = activeBrand==='all' || c.brand===activeBrand;
+    const mq = !q || [c.brand,c.model,c.year,c.country,c.cat,c.notes].some(x=>x&&x.toLowerCase().includes(q));
+    return mb && mq;
+  });
+  list.sort((a,b)=>{
+    if(sort==='name') return a.model.localeCompare(b.model);
+    if(sort==='brand') return a.brand.localeCompare(b.brand);
+    if(sort==='year-desc') return (parseInt(b.year)||0)-(parseInt(a.year)||0);
+    if(sort==='year-asc') return (parseInt(a.year)||0)-(parseInt(b.year)||0);
+    if(sort==='rating') return (b.rating||0)-(a.rating||0);
+    return (b.addedAt||0)-(a.addedAt||0);
+  });
+  return list;
+}
+
+function renderBrandNav(){
+  const el = document.getElementById('brandNav');
+  const brands = getBrands();
+  el.innerHTML = '<div class="nav-label">Brand</div>';
+  const allEl = document.createElement('a');
+  allEl.className = 'nav-item' + (activeBrand==='all' ? ' active' : '');
+  allEl.href = '#';
+  allEl.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/></svg><span>Tutti</span><span class="count">${cans.length}</span>`;
+  allEl.onclick = e=>{e.preventDefault();activeBrand='all';renderBrandNav();render();};
+  el.appendChild(allEl);
+  const colors=['#e8ff47','#47d4ff','#ff6b35','#3ddc84','#ff4545','#c084fc','#fb923c'];
+  brands.forEach((b,i)=>{
+    const n = cans.filter(c=>c.brand===b).length;
+    const a = document.createElement('a');
+    a.href='#';
+    a.className='nav-item'+(activeBrand===b?' active':'');
+    a.innerHTML=`<span class="dot" style="background:${colors[i%colors.length]}"></span><span>${b}</span><span class="count">${n}</span>`;
+    a.onclick=e=>{e.preventDefault();activeBrand=b;renderBrandNav();render();};
+    el.appendChild(a);
+  });
+}
+
+function render(){
+  if(currentPage!=='collection') return;
+  const list = getFiltered();
+  const grid = document.getElementById('grid');
+  const sub = document.getElementById('collectionSubtitle');
+  sub.textContent = activeBrand==='all' ? `Tutte le lattine (${list.length})` : `${activeBrand} (${list.length})`;
+  document.getElementById('emptyMsg').style.display = list.length ? 'none' : 'block';
+  document.getElementById('navTotal').textContent = cans.length;
+  document.getElementById('sTotal').textContent = cans.length;
+  document.getElementById('sBrands').textContent = getBrands().length;
+  if(!list.length){ grid.innerHTML=''; return; }
+  const isList = grid.classList.contains('list-view');
+  grid.innerHTML = list.map((c,i)=>{
+    const img = c.photo ? `<img src="${c.photo}" alt="${c.model}">` : `<div class="no-img">🥫</div>`;
+    const cClass = condClass(c.cond);
+    const condBadge = c.cond ? `<span class="card-cond ${cClass}">${c.cond.split(' ')[0]}</span>` : '';
+    const flags = [c.cat, c.country].filter(Boolean).map(f=>`<span class="flag">${f}</span>`).join('');
+    const stars = c.rating ? `<div class="stars-display">${starsHtml(c.rating,true)}</div>` : '';
+    return `<div class="card" style="animation-delay:${i*0.03}s" onclick="openDetail('${c.id}')">
+      <div class="card-overlay">
+        <div class="card-overlay-btn" onclick="event.stopPropagation();openEdit('${c.id}')" title="Modifica">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+        </div>
+        <div class="card-overlay-btn" onclick="event.stopPropagation();confirmDelete('${c.id}')" title="Elimina">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10"/></svg>
+        </div>
+      </div>
+      <div class="card-img">${img}<div class="img-overlay"></div></div>
+      <div class="card-body">
+        ${isList ? '<div class="card-info">' : ''}
+        <div class="card-brand">${c.brand}</div>
+        <div class="card-name" title="${c.model}">${c.model}</div>
+        <div class="card-meta">
+          <span class="card-year">${c.year||'—'}</span>
+          ${condBadge}
+        </div>
+        <div class="card-flags">${flags}${stars}</div>
+        ${isList ? '</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setView(v){
+  viewMode = v;
+  const grid = document.getElementById('grid');
+  grid.classList.toggle('list-view', v==='list');
+  document.getElementById('gridBtn').classList.toggle('active', v==='grid');
+  document.getElementById('listBtn').classList.toggle('active', v==='list');
+  render();
+}
+
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar-el');
+  const ov=document.getElementById('sidebarOverlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+}
+function closeSidebarMobile(){
+  document.getElementById('sidebar-el').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function showView(v){
+  currentPage = v;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  event.currentTarget && event.currentTarget.classList.add('active');
+  document.getElementById('viewCollection').style.display = v==='collection' ? 'block' : 'none';
+  document.getElementById('viewStats').style.display = v==='stats' ? 'block' : 'none';
+  document.getElementById('viewIo').style.display = v==='io' ? 'block' : 'none';
+  document.getElementById('searchArea').style.display = v==='collection' ? 'block' : 'none';
+  document.getElementById('topbarActions').style.display = v==='collection' ? 'flex' : 'none';
+  const titles = {collection:'Collezione', stats:'Statistiche', io:'Import / Export'};
+  document.getElementById('viewTitle').textContent = titles[v];
+  // sync bottom nav
+  ['collection','stats','io'].forEach(k=>{
+    const el=document.getElementById('bn-'+k);
+    if(el) el.classList.toggle('active', k===v);
+  });
+  if(v==='stats') renderStats();
+  if(v==='collection') render();
+}
+
+function renderStats(){
+  const brands = getBrands();
+  document.getElementById('stTotal').textContent = cans.length;
+  document.getElementById('stBrands').textContent = brands.length;
+  const countries = [...new Set(cans.map(c=>c.country).filter(Boolean))];
+  document.getElementById('stCountries').textContent = countries.length;
+  document.getElementById('stWithPhoto').textContent = cans.filter(c=>c.photo).length;
+  // Brand chart
+  const brandCounts = brands.map(b=>({b,n:cans.filter(c=>c.brand===b).length})).sort((a,b)=>b.n-a.n).slice(0,8);
+  const maxB = brandCounts[0]?.n||1;
+  document.getElementById('brandChart').innerHTML = brandCounts.map(({b,n})=>`
+    <div class="bar-item">
+      <div class="bar-label" title="${b}">${b}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxB*100)}%"></div></div>
+      <div class="bar-num">${n}</div>
+    </div>`).join('');
+  // Cond chart
+  const conds = [['Mint (perfetta)',condColor('Mint')],['Ottima',condColor('Ottima')],['Buona',condColor('Buona')],['Discreta',condColor('Discreta')],['Da restaurare',condColor('Da restaurare')]];
+  document.getElementById('condChart').innerHTML = conds.map(([k,col])=>{
+    const n = cans.filter(c=>c.cond===k).length;
+    return `<div class="cond-item"><div class="cond-dot" style="background:${col}"></div><div class="cond-text">${k.split(' ')[0]}</div><div class="cond-count">${n}</div></div>`;
+  }).join('');
+  // Timeline
+  const years = cans.map(c=>parseInt(c.year)).filter(y=>!isNaN(y)&&y>1900&&y<=new Date().getFullYear()+1);
+  if(years.length){
+    const minY=Math.min(...years), maxY=Math.max(...years);
+    const maxCount=Math.max(...Array.from({length:maxY-minY+1},(_,i)=>years.filter(y=>y===minY+i).length));
+    document.getElementById('timelineChart').innerHTML = Array.from({length:maxY-minY+1},(_,i)=>{
+      const y=minY+i, n=years.filter(x=>x===y).length;
+      const h=maxCount?Math.round(n/maxCount*90):0;
+      return `<div class="timeline-col">
+        <div class="timeline-bar" style="height:${h}px" data-tip="${y}: ${n} lattine" title="${y}: ${n} lattine"></div>
+        <div class="timeline-year">${y}</div>
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('timelineChart').innerHTML = '<span style="color:var(--text3);font-size:13px">Nessun dato anno disponibile</span>';
+  }
+}
+
+function openAdd(){
+  editId=null; currentPhoto=null; currentRating=0;
+  document.getElementById('modalTitle').textContent='Nuova Lattina';
+  document.getElementById('fBrand').value='';
+  document.getElementById('fModel').value='';
+  document.getElementById('fYear').value='';
+  document.getElementById('fCountry').value='';
+  document.getElementById('fVolume').value='';
+  document.getElementById('fCond').value='';
+  document.getElementById('fCat').value='';
+  document.getElementById('fValue').value='';
+  document.getElementById('fSource').value='';
+  document.getElementById('fNotes').value='';
+  document.getElementById('btnDel').style.display='none';
+  resetPhoto(); updateStars(0);
+  document.getElementById('addModal').classList.add('open');
+  setTimeout(()=>document.getElementById('fBrand').focus(),100);
+}
+
+function openEdit(id){
+  const c=cans.find(x=>x.id===id); if(!c) return;
+  editId=id; currentPhoto=c.photo||null; currentRating=c.rating||0;
+  document.getElementById('modalTitle').textContent='Modifica Lattina';
+  document.getElementById('fBrand').value=c.brand;
+  document.getElementById('fModel').value=c.model;
+  document.getElementById('fYear').value=c.year||'';
+  document.getElementById('fCountry').value=c.country||'';
+  document.getElementById('fVolume').value=c.volume||'';
+  document.getElementById('fCond').value=c.cond||'';
+  document.getElementById('fCat').value=c.cat||'';
+  document.getElementById('fValue').value=c.value||'';
+  document.getElementById('fSource').value=c.source||'';
+  document.getElementById('fNotes').value=c.notes||'';
+  document.getElementById('btnDel').style.display='inline-flex';
+  updateStars(currentRating);
+  if(c.photo){
+    document.getElementById('photoDrop').innerHTML=`<img src="${c.photo}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+  } else resetPhoto();
+  document.getElementById('addModal').classList.add('open');
+}
+
+function editFromDetail(){ closeDetail(); if(detailId) openEdit(detailId); }
+function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
+
+function resetPhoto(){
+  document.getElementById('photoDrop').innerHTML=`<div class="photo-drop-label"><div class="icon">📸</div><p>Clicca per caricare</p><span>JPG, PNG, WEBP</span></div>`;
+}
+
+function loadPhoto(input){
+  const file=input.files[0]; if(!file) return;
+  // Resize image before storing
+  const img=new Image();
+  const reader=new FileReader();
+  reader.onload=e=>{
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const max=800;
+      let w=img.width, h=img.height;
+      if(w>max||h>max){ if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      currentPhoto=canvas.toDataURL('image/jpeg',0.82);
+      document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+function setRating(v){ currentRating=v; updateStars(v); }
+function updateStars(v){
+  document.querySelectorAll('#ratingStars .star').forEach((s,i)=>s.classList.toggle('active',i<v));
+  currentRating=v;
+}
+
+function saveCan(){
+  const brand=document.getElementById('fBrand').value.trim();
+  const model=document.getElementById('fModel').value.trim();
+  if(!brand||!model){ toast('Brand e modello sono obbligatori','error'); return; }
+  const can={
+    id: editId||(Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
+    brand, model,
+    year: document.getElementById('fYear').value.trim(),
+    country: document.getElementById('fCountry').value.trim(),
+    volume: document.getElementById('fVolume').value.trim(),
+    cond: document.getElementById('fCond').value,
+    cat: document.getElementById('fCat').value,
+    value: document.getElementById('fValue').value.trim(),
+    source: document.getElementById('fSource').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+    rating: currentRating,
+    photo: currentPhoto,
+    addedAt: editId ? (cans.find(x=>x.id===editId)?.addedAt||Date.now()) : Date.now()
+  };
+  if(editId){ const i=cans.findIndex(x=>x.id===editId); if(i>-1) cans[i]=can; toast('Lattina aggiornata'); }
+  else{ cans.push(can); toast('Lattina aggiunta alla collezione'); }
+  save(); closeModal(); renderBrandNav(); render();
+}
+
+function deleteCan(){
+  if(!editId||!confirm('Eliminare questa lattina dalla collezione?')) return;
+  cans=cans.filter(c=>c.id!==editId);
+  save(); closeModal(); renderBrandNav(); render(); toast('Lattina eliminata','error');
+}
+
+function confirmDelete(id){
+  const c=cans.find(x=>x.id===id); if(!c) return;
+  if(!confirm(`Eliminare "${c.model}"?`)) return;
+  cans=cans.filter(x=>x.id!==id);
+  save(); renderBrandNav(); render(); toast('Lattina eliminata','error');
+}
+
+function openDetail(id){
+  detailId=id; const c=cans.find(x=>x.id===id); if(!c) return;
+  const hero=document.getElementById('dHero');
+  if(c.photo){
+    hero.innerHTML=`<img class="detail-hero-img" src="${c.photo}" alt="${c.model}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
+  } else {
+    hero.innerHTML=`<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
+  }
+  const items=[
+    ['Anno',c.year||'—','accent'],['Paese',c.country||'—',''],['Volume',c.volume?c.volume+'ml':'—',''],
+    ['Condizioni',c.cond||'—',''],['Categoria',c.cat||'—',''],['Valore',c.value?'€'+c.value:'—','accent']
+  ];
+  document.getElementById('dGrid').innerHTML=items.map(([k,v,cls])=>`<div class="detail-item"><div class="detail-item-key">${k}</div><div class="detail-item-val ${cls}">${v}</div></div>`).join('');
+  document.getElementById('dNoteWrap').innerHTML = c.notes
+    ? `<div class="detail-note">${c.notes}</div>`
+    : `<div class="detail-note detail-note-empty">Nessuna nota</div>`;
+  const tags=[c.source, c.rating?'★'.repeat(c.rating):null].filter(Boolean);
+  const starStr = c.rating ? `<div class="detail-tag"><div class="stars-display" style="display:inline-flex">${starsHtml(c.rating)}</div></div>` : '';
+  document.getElementById('dTags').innerHTML = starStr + (c.source?`<span class="detail-tag">${c.source}</span>`:'');
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(cans,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='canvault-collezione.json'; a.click();
+  toast('Esportazione completata');
+}
+
+function exportCSV(){
+  const headers=['Brand','Modello','Anno','Paese','Volume','Condizioni','Categoria','Valore','Provenienza','Note','Valutazione'];
+  const rows=cans.map(c=>[c.brand,c.model,c.year,c.country,c.volume,c.cond,c.cat,c.value,c.source,c.notes,c.rating].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`));
+  const csv=[headers.map(h=>`"${h}"`).join(','),...rows.map(r=>r.join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='canvault-collezione.csv'; a.click();
+  toast('CSV esportato');
+}
+
+function importJSON(input){
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error();
+      const existing=new Set(cans.map(c=>c.id));
+      const newOnes=data.filter(c=>!existing.has(c.id));
+      cans=[...cans,...newOnes];
+      save(); renderBrandNav(); render();
+      toast(`Importate ${newOnes.length} nuove lattine`);
+    } catch(err){ toast('File JSON non valido','error'); }
+  };
+  r.readAsText(file);
+  input.value='';
+}
+
+function clearAll(){
+  if(!confirm('Cancellare TUTTA la collezione? Questa azione è irreversibile.')) return;
+  cans=[]; save(); activeBrand='all'; renderBrandNav(); render();
+  toast('Collezione cancellata','error');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if((e.key==='Escape')){closeModal();closeDetail();}
+  if(e.key==='n'&&!e.target.matches('input,textarea,select')) openAdd();
+});
+
+// Close modals on backdrop click
+document.getElementById('addModal').addEventListener('click',e=>{if(e.target===document.getElementById('addModal'))closeModal();});
+document.getElementById('detailModal').addEventListener('click',e=>{if(e.target===document.getElementById('detailModal'))closeDetail();});
+
+// Search
+document.getElementById('searchInput').addEventListener('input',render);
+
+// Init
+renderBrandNav();
+render();
+
+// Add some demo data if empty
+if(cans.length===0){
+  const demo=[
+    {id:'demo1',brand:'Coca-Cola',model:'Edizione Mondiale USA 1994',year:'1994',country:'USA',volume:'355',cond:'Ottima',cat:'Cola',value:'25',source:'eBay',notes:'Lattina originale del Mondiale di calcio USA 1994. Condizioni eccellenti, mai aperta.',rating:5,photo:null,addedAt:Date.now()-86400000*10},
+    {id:'demo2',brand:'Pepsi',model:'Crystal Pepsi 1992',year:'1992',country:'USA',volume:'355',cond:'Buona',cat:'Cola',value:'40',source:'Mercatino',notes:'Rara versione trasparente. Leggeri segni sul fondo.',rating:4,photo:null,addedAt:Date.now()-86400000*8},
+    {id:'demo3',brand:'Sprite',model:'Summer Edition 2001',year:'2001',country:'Italia',volume:'330',cond:'Mint (perfetta)',cat:'Cola',value:'8',source:'Fiera del collezionismo',notes:'',rating:3,photo:null,addedAt:Date.now()-86400000*5},
+    {id:'demo4',brand:'Coca-Cola',model:'Atlanta 1996 Olympics',year:'1996',country:'USA',volume:'355',cond:'Ottima',cat:'Cola',value:'35',source:'Collega',notes:'Commemorativa delle Olimpiadi di Atlanta.',rating:5,photo:null,addedAt:Date.now()-86400000*3},
+    {id:'demo5',brand:'Fanta',model:'World Cup France 1998',year:'1998',country:'Francia',volume:'330',cond:'Discreta',cat:'Cola',value:'12',source:'Negozio vintage',notes:'',rating:2,photo:null,addedAt:Date.now()-86400000*1},
+  ];
+  cans=demo; save(); renderBrandNav(); render();
+}
+</script>
+</body>
+</html>

@@ -32,7 +32,7 @@
   --radius: 12px;
   --radius-sm: 7px;
   --mobile-topbar-height: 108px;
-  --mobile-menu-height: 66px;
+  --mobile-menu-height: 44px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -295,109 +295,192 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 
+
+/* COMPACT VIEW */
+.grid.compact-view{grid-template-columns:1fr;gap:0;border:1px solid var(--line);border-radius:var(--radius)}
+.grid.compact-view .card{border-radius:0;border:none;border-bottom:1px solid var(--line);display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:0;animation:none}
+.grid.compact-view .card:last-child{border-bottom:none}
+.grid.compact-view .card:hover{transform:none;background:var(--bg3)}
+.grid.compact-view .card-img{width:52px;height:52px;flex-shrink:0;border-radius:0}
+.grid.compact-view .card-img .img-overlay{display:none}
+.grid.compact-view .card-overlay{display:none}
+.grid.compact-view .card-body{padding:8px 12px;flex:1;display:flex;align-items:center;gap:0;min-width:0}
+.grid.compact-view .card-info-wrap{flex:1;min-width:0}
+.grid.compact-view .card-brand{font-size:9px;letter-spacing:1.5px;margin-bottom:1px}
+.grid.compact-view .card-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+.grid.compact-view .card-meta{display:none}
+.grid.compact-view .card-flags{display:none}
+.grid.compact-view .compact-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;padding-right:12px}
+.grid.compact-view .compact-year{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.grid.compact-view .compact-cond{font-size:10px;padding:2px 7px;border-radius:10px}
+.compact-meta{display:none}
+
 /* RESPONSIVE */
 @media(max-width:768px){
-  body{padding-top:calc(var(--mobile-topbar-height) + var(--mobile-menu-height));}
-  .sidebar{width:min(84vw,300px);top:calc(var(--mobile-topbar-height) + var(--mobile-menu-height));bottom:0;transform:translateX(-100%);transition:transform .25s;z-index:80;box-shadow:18px 0 50px rgba(0,0,0,.45)}
-  .sidebar.open{transform:translateX(0)}
-  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:75;pointer-events:none}
-  .sidebar-overlay.open{display:block;pointer-events:auto}
-  .main{margin-left:0;padding-bottom:18px}
-  .topbar{position:fixed;top:0;left:0;right:0;z-index:90;padding:10px 12px 12px;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(14,14,15,.96);backdrop-filter:blur(16px);box-shadow:0 12px 30px rgba(0,0,0,.22)}
-  .topbar-brand{display:flex;order:1;flex:1;align-items:baseline}
-  .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:22px}
-  .topbar-title{font-size:11px;line-height:1;order:3;flex:0 0 100%;min-width:0;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase}
-  .search-box{max-width:none;flex:1 1 100%;width:100%;order:4}
-  .search-box input{font-size:13px;padding:10px 12px 10px 34px;min-height:40px}
-  .topbar-actions{gap:6px;order:2;margin-left:0;display:flex;align-items:center}
-  .sort-select,.view-toggle{display:none}
+
+  /* ── Layout: no padding, sidebar is overlay ── */
+  body{padding-left:0 !important}
+  .main{margin-left:0}
+
+  /* ── Sidebar: hidden by default, slides in ── */
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;
+    width:240px;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    z-index:80;
+    overflow-y:auto
+  }
+  .sidebar.open{transform:translateX(0);box-shadow:8px 0 40px rgba(0,0,0,.5)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:75;backdrop-filter:blur(2px)}
+  .sidebar-overlay.open{display:block}
+
+  /* ── Topbar: fixed at top, full width ── */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;z-index:90;
+    padding:10px 14px;gap:10px;
+    flex-wrap:nowrap;align-items:center;
+    background:rgba(14,14,15,.97);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line)
+  }
+  .btn-menu{display:flex !important;min-width:36px;height:36px;padding:0 !important;align-items:center;justify-content:center;flex-shrink:0}
+  .topbar-brand{display:flex;align-items:baseline;flex-shrink:0}
+  .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:18px}
+  .topbar-title{display:none}
+  .firebase-status{display:flex;margin-left:auto;flex-shrink:0}
+  .search-box{display:none}
+  .topbar-actions{gap:6px;margin-left:0;flex-shrink:0}
+  .sort-select{display:none}
+  .view-toggle{display:flex}
   .btn-primary span{display:none}
-  .btn-primary{display:none}
-  .btn-menu{display:flex;min-width:40px;height:40px;align-items:center;justify-content:center;padding:0 !important}
-  .content,.stats-page,#viewIo{padding:14px}
-  .section-header{margin-bottom:14px}
-  .section-header h2{font-size:16px;line-height:1.1}
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .card{border-radius:11px}
-  .card-img{height:132px}
-  .card-body{padding:10px}
-  .card-brand{font-size:9px;letter-spacing:1.5px}
-  .card-name{font-size:13px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.6em}
-  .card-meta{gap:8px;align-items:flex-start;flex-wrap:wrap}
-  .card-flags{margin-top:7px;gap:5px}
-  .flag{font-size:9px;padding:2px 6px}
+  .btn-primary{padding:7px 10px}
+
+  /* ── Body padding for fixed topbar ── */
+  body{padding-top:57px !important}
+
+  /* ── Content ── */
+  .content,.stats-page,#viewIo,#viewBrands{padding:12px 14px}
+  .section-header{margin-bottom:10px}
+  .section-header h2{font-size:15px}
+
+  /* ── Grid views ── */
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .card{border-radius:10px}
+  .card-img{height:120px}
+  .card-body{padding:8px 9px}
+  .card-brand{font-size:9px}
+  .card-name{font-size:12px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.4em;margin-bottom:5px}
+  .card-meta{gap:5px;flex-wrap:wrap}
+  .card-cond{font-size:9px;padding:2px 5px}
+  .card-flags{margin-top:4px;gap:3px}
+  .flag{font-size:9px;padding:2px 5px}
+  .card-overlay{opacity:1}
+
+  /* Compact view on mobile */
+  .grid.compact-view{border-radius:var(--radius-sm)}
+  .grid.compact-view .card-img{width:46px;height:46px}
+  .grid.compact-view .card-body{padding:5px 10px}
+  .grid.compact-view .card-name{font-size:12px}
+  .grid.compact-view .compact-meta{padding-right:8px}
+  .grid.compact-view .compact-year{font-size:10px}
+
+  /* List view */
   .grid.list-view{grid-template-columns:1fr}
-  .grid.list-view .card{display:grid;grid-template-columns:72px 1fr;align-items:stretch}
-  .grid.list-view .card-img{width:72px;height:100%}
-  .grid.list-view .card-body{padding:10px 12px;display:block}
+  .grid.list-view .card{display:grid;grid-template-columns:64px 1fr;align-items:stretch}
+  .grid.list-view .card-img{width:64px;height:100%}
+  .grid.list-view .card-body{padding:8px 10px;display:block}
   .grid.list-view .card-name{min-height:auto;-webkit-line-clamp:1;white-space:nowrap}
-  .grid.list-view .card-meta{flex-direction:row;align-items:center;justify-content:space-between}
-  .grid.list-view .card-flags{margin-top:6px}
-  .stats-hero{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
-  .stat-card{padding:16px}
-  .stat-card-n{font-size:34px}
-  .stat-card-l{font-size:10px;line-height:1.2}
-  .charts-row{grid-template-columns:1fr;gap:10px;margin-bottom:16px}
-  .chart-box,.timeline-row,.io-section{padding:16px}
-  .bar-label{width:72px;font-size:11px}
-  .cond-dist{grid-template-columns:1fr}
-  .timeline-grid{overflow-x:auto;padding-bottom:6px;gap:10px}
-  .timeline-col{min-width:26px}
-  .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .detail-content{padding:16px}
-  .detail-hero-img,.detail-hero-placeholder{height:220px}
-  .detail-hero-name{font-size:22px}
-  .detail-footer{flex-direction:column-reverse}
+
+  /* ── Stats ── */
+  .stats-hero{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+  .stat-card{padding:12px}
+  .stat-card-n{font-size:28px}
+  .stat-card-l{font-size:9px}
+  .charts-row{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+  .chart-box,.timeline-row,.io-section{padding:14px}
+  .bar-label{width:68px;font-size:11px}
+  .cond-dist{grid-template-columns:1fr 1fr}
+  .timeline-grid{overflow-x:auto;gap:6px}
+  .timeline-col{min-width:22px}
+
+  /* ── Detail ── */
+  .detail-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .detail-content{padding:14px}
+  .detail-hero-img,.detail-hero-placeholder{height:200px}
+  .detail-hero-name{font-size:19px}
+  .detail-footer{flex-direction:column-reverse;gap:8px}
   .detail-footer .btn{width:100%;justify-content:center}
-  .modal,.detail-modal{max-width:100%;max-height:92dvh;border-radius:16px 16px 0 0;margin-top:auto}
+
+  /* ── Modal ── */
+  .modal,.detail-modal{max-width:100%;max-height:93dvh;border-radius:18px 18px 0 0;margin-top:auto}
   .modal-bg{align-items:flex-end;padding:0}
-  .modal-header,.modal-body,.modal-footer{padding-left:16px;padding-right:16px}
-  .modal-body{padding-top:16px;padding-bottom:16px}
-  .modal-footer{position:sticky;bottom:0;background:var(--bg2);padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
-  .modal-footer .btn{flex:1;justify-content:center}
+  .modal-header{padding:14px 16px 10px}
+  .modal-header h2{font-size:16px}
+  .modal-body{padding:12px 16px}
+  .modal-footer{
+    position:sticky;bottom:0;background:var(--bg2);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+    flex-wrap:wrap;border-top:1px solid var(--line)
+  }
+  .modal-footer .btn{flex:1;justify-content:center;min-height:42px}
   .modal-footer .btn-danger{flex-basis:100%;margin-right:0 !important}
-  .field{margin-bottom:14px}
-  .field input,.field select,.field textarea{min-height:42px;font-size:13px}
+
+  /* ── Form ── */
+  .field{margin-bottom:11px}
+  .field label{font-size:10px;margin-bottom:4px}
+  .field input,.field select,.field textarea{min-height:42px;font-size:13px;padding:9px 10px}
   .field-row,.field-row3{grid-template-columns:1fr}
-  .photo-drop{height:120px}
-  .brand-logo-preview{width:64px;height:64px}
-  .brand-logo-actions{flex-direction:column}
-  .brand-logo-stage{width:148px;height:148px}
-  .brand-logo-buttons{flex-direction:column}
-  .logo-tagline{display:none}
-  .sidebar-footer .stats-mini{display:none}
-  .nav-label{display:block}
-  .nav-item{padding:10px}
-  .nav-item span,.nav-item .count{display:flex}
-  .empty{padding:3.5rem 1rem}
-  .toast{left:14px;right:14px;bottom:14px;max-width:none}
-  .bottom-nav{display:flex;pointer-events:auto}
+  .photo-drop{height:100px}
+  .rating-stars .star{font-size:20px}
+  .brand-logo-preview{width:56px;height:56px}
+  .brand-logo-actions,.brand-logo-buttons{flex-direction:column}
+  .brand-logo-stage{width:130px;height:130px}
+
+  /* ── Misc ── */
+  .empty{padding:2.5rem 1rem}
+  .empty-icon{font-size:40px}
+  .toast{left:10px;right:10px;bottom:10px;max-width:none;font-size:13px}
+  .bottom-nav{display:none !important}
 }
-@media(max-width:560px){
-  body{padding-top:calc(var(--mobile-topbar-height) + var(--mobile-menu-height));}
-  .topbar{padding:10px 10px 12px}
-  .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:20px}
-  .content,.stats-page,#viewIo{padding:12px}
-  .grid{gap:8px}
-  .card-img{height:118px}
-  .detail-grid{grid-template-columns:1fr}
+
+@media(max-width:420px){
+  .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:16px}
+  .content,.stats-page,#viewIo,#viewBrands{padding:10px}
+  .grid{grid-template-columns:1fr 1fr;gap:6px}
+  .card-img{height:110px}
+  .grid.compact-view .card-img{width:42px;height:42px}
+  .grid.compact-view .card-name{font-size:11px}
 }
-@media(max-width:390px){
-  .grid{grid-template-columns:1fr 1fr}
-  .card-img{height:108px}
-  .bnav-item{font-size:8px}
-}
+
 @media(min-width:769px){
-  .btn-menu{display:none}
-  .sidebar-overlay{display:none}
+  .btn-menu{display:none !important}
+  .sidebar-overlay{display:none !important}
   .topbar-brand{display:none}
+  .firebase-status{display:none}
+  .bottom-nav{display:none !important}
 }
-/* BOTTOM NAV MOBILE */
-.bottom-nav{display:none;position:fixed;top:var(--mobile-topbar-height);left:0;right:0;bottom:auto;background:rgba(22,22,24,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);z-index:85;padding:4px 8px;box-shadow:0 12px 30px rgba(0,0,0,.22)}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;padding:8px 0;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:transparent;transition:color .15s}
-.bnav-item.active{color:var(--accent)}
-.bnav-item svg{transition:transform .15s}
-.bnav-item.active svg{transform:scale(1.1)}
+/* BOTTOM NAV MOBILE — barra menu orizzontale sempre visibile sotto l'header */
+.bottom-nav{display:none;position:fixed;top:var(--mobile-topbar-height);left:0;right:0;background:var(--bg2);border-bottom:1px solid var(--line2);z-index:85;overflow:hidden}
+.bnav-item{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;height:40px;padding:0 8px;cursor:pointer;color:var(--text3);font-size:11px;font-weight:500;white-space:nowrap;border:none;background:transparent;transition:color .12s;border-bottom:2px solid transparent;min-width:0;overflow:hidden}
+.bnav-item.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(227,255,0,0.04)}
+.bnav-item svg{flex-shrink:0}
+.bnav-item:active{opacity:.7}
+.bnav-add{color:var(--accent) !important;font-weight:600}
+.bnav-count{font-family:'DM Mono',monospace;font-size:9px;background:var(--bg4);padding:1px 5px;border-radius:8px;color:var(--text3);flex-shrink:0}
+.bnav-item.active .bnav-count{background:rgba(227,255,0,0.15);color:var(--accent)}
+.bnav-divider{display:none}
+
+/* FIREBASE STATUS BOX */
+.firebase-status{display:none;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);padding:4px 10px;font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.fb-dot.online{background:var(--green)}
+.fb-dot.syncing{background:var(--accent);animation:fbPulse .8s ease infinite alternate}
+.fb-dot.error{background:var(--red)}
+@keyframes fbPulse{from{opacity:.4}to{opacity:1}}
+.fb-label{font-size:11px;color:var(--text3)}
+.fb-label.online{color:var(--green)}
+.fb-label.syncing{color:var(--accent)}
+.fb-label.error{color:var(--red)}
 
 
 /* BRANDS PAGE */
@@ -495,24 +578,33 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
 <main class="main">
   <!-- TOPBAR -->
   <div class="topbar">
+    <!-- Hamburger (mobile only) -->
+    <button class="btn btn-ghost btn-menu" id="menuBtn" title="Menu" type="button">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
     <div class="topbar-brand" aria-label="myCansPRO">
       <span class="logo-my">my</span><span class="logo-cans">Cans</span><span class="logo-pro">PRO</span>
     </div>
     <div class="topbar-title" id="viewTitle">Collezione</div>
+    <!-- Firebase sync box (mobile only) -->
+    <div class="firebase-status" id="firebaseStatus">
+      <span class="fb-dot" id="fbDot"></span>
+      <span class="fb-label" id="fbLabel">Firebase</span>
+    </div>
     <div class="search-box" id="searchArea">
       <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
       <input type="text" id="searchInput" placeholder="Cerca brand, prodotto, variante, paese...">
     </div>
     <div class="topbar-actions" id="topbarActions">
-      <button class="btn btn-ghost btn-menu" id="menuBtn" title="Menu" style="padding:8px 10px" type="button">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
-      </button>
       <div class="view-toggle">
-        <button class="view-btn active" id="gridBtn" title="Griglia" type="button">
+        <button class="view-btn active" id="compactBtn" title="Lista compatta" type="button">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <button class="view-btn" id="gridBtn" title="Griglia" type="button">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
         </button>
-        <button class="view-btn" id="listBtn" title="Lista" type="button">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h10"/></svg>
+        <button class="view-btn" id="listBtn" title="Lista espansa" type="button">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="4" rx="1"/><rect x="1" y="7" width="14" height="4" rx="1"/><rect x="1" y="13" width="14" height="2" rx="1"/></svg>
         </button>
       </div>
       <select class="sort-select" id="sortSel">
@@ -887,30 +979,26 @@ logo</div>
 </div>
 
 <!-- BOTTOM NAV (mobile) -->
-<nav class="bottom-nav">
+<nav class="bottom-nav" id="bottomNav">
   <button class="bnav-item active" id="bn-collection" data-view="collection" type="button">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
-    Collezione
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    Collezione<span class="bnav-count" id="bnav-total">0</span>
   </button>
   <button class="bnav-item" id="bn-stats" data-view="stats" type="button">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
     Statistiche
   </button>
-  <button class="bnav-item" id="mobileAddBtn" style="color:var(--accent)" type="button">
-    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 4v8M4 8h8"/></svg>
-    Aggiungi
-  </button>
   <button class="bnav-item" id="bn-brands" data-view="brands" type="button">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13h10M4 13V5l4-2 4 2v8M6 7h4M6 10h4"/></svg>
-    Brand
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13h10M4 13V5l4-2 4 2v8M6 7h4M6 10h4"/></svg>
+    Brand<span class="bnav-count" id="bnav-brands">0</span>
   </button>
   <button class="bnav-item" id="bn-io" data-view="io" type="button">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
-    Export
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10a1 1 0 011 1v0a1 1 0 01-1 1H3a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>
+    Import/Export
   </button>
-  <button class="bnav-item" id="mobileBrandBtn" type="button">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
-    Brand
+  <button class="bnav-item bnav-add" id="mobileAddBtn" type="button">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 2v12M2 8h12"/></svg>
+    Aggiungi
   </button>
 </nav>
 
@@ -1036,7 +1124,7 @@ let currentPhoto = null, currentPhotoChanged = false;
 let currentBrandLogo = null, currentBrandLogoChanged = false;
 let currentBrandColor = "#e3ff00", currentBrandColorChanged = false;
 let editId = null, detailId = null, currentRating = 0;
-let viewMode = 'grid', activeBrand = 'all', currentPage = 'collection';
+let viewMode = 'compact', activeBrand = 'all', currentPage = 'collection';
 let imageSearchResults = [];
 let selectedImageResult = null;
 let brandStyleEditingName = null;
@@ -1052,17 +1140,22 @@ function loadLocal(){ /* dati su Firebase */ }
 
 async function loadCans(){
   showLoading(true);
+  setFirebaseStatus('syncing','Sincronizzazione...');
   try {
     cans = (await fbLoadCans()).map(normalizeCan);
+    setFirebaseStatus('online','Firebase ✓');
+    setTimeout(()=>setFirebaseStatus('online', cans.length + ' lattine'), 1800);
   } catch(e){
     console.error('Errore caricamento Firebase:', e);
     toast('Errore connessione Firebase','error');
+    setFirebaseStatus('error','Errore connessione');
     cans = [];
   }
   renderBrandNav();
   render();
   renderStats();
   renderBrandsPage();
+  updateBnavCounts();
   showLoading(false);
 }
 
@@ -1076,6 +1169,22 @@ function toast(msg, type='success'){
   window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
 }
 
+function setFirebaseStatus(state, text){
+  const dot = document.getElementById('fbDot');
+  const label = document.getElementById('fbLabel');
+  if(!dot || !label) return;
+  dot.className = 'fb-dot ' + state;
+  label.className = 'fb-label ' + state;
+  label.textContent = text;
+}
+
+function updateBnavCounts(){
+  const t = document.getElementById('bnav-total');
+  const b = document.getElementById('bnav-brands');
+  if(t) t.textContent = cans.length;
+  if(b) b.textContent = getBrands().length;
+}
+
 function showLoading(on){
   let el = document.getElementById('loadingBar');
   if(!el){
@@ -1085,6 +1194,7 @@ function showLoading(on){
     document.body.appendChild(el);
   }
   el.style.opacity = on ? '1' : '0';
+  if(on) setFirebaseStatus('syncing','Sincronizzazione...');
 }
 
 function getBrands(){ return [...new Set(cans.map(c=>c.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); }
@@ -1256,13 +1366,19 @@ function render(){
       <div class="card-img">${img}<div class="img-overlay"></div></div>
       <div class="card-body">
         ${isList ? '<div class="card-info">' : ''}
+        <div class="card-info-wrap">
         <div class="card-brand" style="display:flex;align-items:center;gap:6px">${getBrandLogoHtml(c.brand, c.brandLogo, c.brandColor)}<span>${c.brand || '—'}</span></div>
         <div class="card-name" title="${title}">${title}</div>
+        </div>
         <div class="card-meta">
           <span class="card-year">${c.year||'—'}</span>
           ${condBadge}
         </div>
         <div class="card-flags">${flags}${stars}</div>
+        <div class="compact-meta">
+          <span class="compact-year">${c.year||''}</span>
+          ${c.cond ? `<span class="compact-cond ${condClass(c.cond)}">${c.cond.split(' ')[0]}</span>` : ''}
+        </div>
         ${isList ? '</div>' : ''}
       </div>
     </div>`;
@@ -1272,9 +1388,14 @@ function render(){
 function setView(v){
   viewMode = v;
   const grid = document.getElementById('grid');
-  if(grid) grid.classList.toggle('list-view', v==='list');
+  if(grid){
+    grid.classList.toggle('list-view', v==='list');
+    grid.classList.toggle('compact-view', v==='compact');
+    if(v==='grid') grid.classList.remove('list-view','compact-view');
+  }
   document.getElementById('gridBtn')?.classList.toggle('active', v==='grid');
   document.getElementById('listBtn')?.classList.toggle('active', v==='list');
+  document.getElementById('compactBtn')?.classList.toggle('active', v==='compact');
   render();
 }
 
@@ -1289,25 +1410,21 @@ function toggleSidebar(force){
 function closeSidebarMobile(){ toggleSidebar(false); }
 
 function updateMobileLayout(){
-  const isMobile = window.innerWidth <= 768;
-  const topbar = document.querySelector('.topbar');
-  if(!topbar) return;
-  if(isMobile){
-    const topbarHeight = Math.ceil(topbar.offsetHeight || 56);
-    const menuHeight = document.querySelector('.bottom-nav')?.offsetHeight || 60;
-    document.documentElement.style.setProperty('--mobile-topbar-height', topbarHeight + 'px');
-    document.documentElement.style.setProperty('--mobile-menu-height', menuHeight + 'px');
-  } else {
-    document.documentElement.style.setProperty('--mobile-topbar-height', '0px');
-    document.documentElement.style.setProperty('--mobile-menu-height', '0px');
-  }
+  // Sidebar is overlay on mobile — only need to handle topbar height for body padding
+  // (handled via CSS padding-top:57px on mobile)
 }
 
 function showView(v, triggerEl=null){
   currentPage = v;
+  // sync sidebar nav-items
   document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.remove('active'));
-  const activeEl = triggerEl || document.querySelector(`.nav-item[data-view="${v}"]`);
-  if(activeEl) activeEl.classList.add('active');
+  const sidebarEl = triggerEl?.matches('.nav-item[data-view]') ? triggerEl : document.querySelector(`.nav-item[data-view="${v}"]`);
+  if(sidebarEl) sidebarEl.classList.add('active');
+  // sync bnav items
+  document.querySelectorAll('.bnav-item[data-view]').forEach(el=>el.classList.remove('active'));
+  const bnavEl = document.querySelector(`.bnav-item[data-view="${v}"]`);
+  if(bnavEl) bnavEl.classList.add('active');
+  // show/hide views
   document.getElementById('viewCollection').style.display = v==='collection' ? 'block' : 'none';
   document.getElementById('viewStats').style.display = v==='stats' ? 'block' : 'none';
   document.getElementById('viewBrands').style.display = v==='brands' ? 'block' : 'none';
@@ -1316,7 +1433,6 @@ function showView(v, triggerEl=null){
   document.getElementById('topbarActions').style.display = v==='collection' ? 'flex' : 'none';
   const titles = {collection:'Collezione', stats:'Statistiche', brands:'Brand', io:'Import / Export'};
   document.getElementById('viewTitle').textContent = titles[v] || 'Collezione';
-  ['collection','stats','brands','io'].forEach(k=>document.getElementById('bn-'+k)?.classList.toggle('active', k===v));
   if(v==='stats') renderStats();
   if(v==='brands') renderBrandsPage();
   if(v==='collection') render();
@@ -1716,12 +1832,22 @@ function loadPhoto(input){
   const file=input.files?.[0]; if(!file) return;
   const reader=new FileReader();
   reader.onload=e=>{
-    currentPhoto=e.target.result;
-    currentPhotoChanged=true;
-    selectedImageResult = null;
-    document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active'));
-    document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
-    setImageSearchStatus('Foto caricata manualmente.');
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=900, QUALITY=0.72;
+      let w=img.width, h=img.height;
+      if(w>h){ if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} } else { if(h>MAX){w=Math.round(w*MAX/h);h=MAX;} }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      currentPhoto=canvas.toDataURL('image/jpeg',QUALITY);
+      currentPhotoChanged=true;
+      selectedImageResult=null;
+      document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active'));
+      document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+      setImageSearchStatus('Foto caricata.');
+    };
+    img.src=e.target.result;
   };
   reader.readAsDataURL(file);
   input.value='';
@@ -2046,7 +2172,8 @@ async function saveCan(){
     }
 
     toast(isNew ? 'Lattina aggiunta ✓' : 'Lattina aggiornata ✓');
-    renderBrandNav(); renderStats(); renderBrandsPage(); closeModal(); render();
+    setFirebaseStatus('online', cans.length + ' lattine');
+    renderBrandNav(); renderStats(); renderBrandsPage(); closeModal(); render(); updateBnavCounts();
   } catch(e){
     console.error(e);
     toast('Errore salvataggio: '+e.message,'error');
@@ -2064,6 +2191,8 @@ async function deleteCan(id=editId){
     editId=null; closeModal(); closeDetail();
     renderBrandNav(); renderStats(); renderBrandsPage(); render();
     toast('Lattina eliminata');
+    setFirebaseStatus('online', cans.length + ' lattine');
+    updateBnavCounts();
   } catch(e){ toast('Errore eliminazione','error'); }
 }
 function openDetail(id){
@@ -2134,7 +2263,8 @@ function bindEvents(){
     if(!t) return;
     if(t.matches('.nav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view, t); return; }
     if(t.matches('.bnav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view); return; }
-    if(t.id === 'menuBtn' || t.id === 'mobileBrandBtn'){ e.preventDefault(); toggleSidebar(); return; }
+    if(t.id === 'menuBtn'){ e.preventDefault(); toggleSidebar(); return; }
+    if(t.id === 'compactBtn'){ e.preventDefault(); setView('compact'); return; }
     if(t.id === 'gridBtn'){ e.preventDefault(); setView('grid'); return; }
     if(t.id === 'listBtn'){ e.preventDefault(); setView('list'); return; }
     if(t.id === 'topAddBtn' || t.id === 'emptyAddBtn' || t.id === 'mobileAddBtn'){ e.preventDefault(); openAdd(); return; }
@@ -2167,12 +2297,13 @@ function bindEvents(){
   window.addEventListener('orientationchange', updateMobileLayout);
 }
 
-window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.openBrandStyleEditor=openBrandStyleEditor; window.onBrandStyleNameInput=onBrandStyleNameInput; window.saveBrandStyle=saveBrandStyle; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.onBrandColorInput=onBrandColorInput; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
+window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.openBrandStyleEditor=openBrandStyleEditor; window.onBrandStyleNameInput=onBrandStyleNameInput; window.saveBrandStyle=saveBrandStyle; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.onBrandColorInput=onBrandColorInput; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll; window.updateBnavCounts=updateBnavCounts; window.setFirebaseStatus=setFirebaseStatus;
 
 document.addEventListener('DOMContentLoaded', ()=>{
   injectHomeScreenAssets();
   bindEvents();
   loadCans();
+  setView('compact');
   showView('collection', document.querySelector('.nav-item[data-view="collection"]'));
   updateMobileLayout();
 });

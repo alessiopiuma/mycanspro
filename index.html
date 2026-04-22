@@ -695,17 +695,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 const STORAGE_KEY = 'mycanspro_collection_v2';
 const imageSearchConfig = {
   enabled: true,
-  provider: 'bing', // 'bing' | 'google' | 'bing-then-google' | 'google-then-bing' | 'proxy'
+  provider: 'opensource',
   endpoint: '',
   apiKey: '',
-  bingApiKey: '',
-  googleApiKey: '',
-  googleCx: '',
-  maxResults: 12,
-  market: 'it-IT',
-  safeSearch: 'Moderate'
+  maxResults: 12
 };
-
 let cans = [];
 let currentPhoto = null, currentPhotoChanged = false;
 let editId = null, detailId = null, currentRating = 0;
@@ -1235,11 +1229,7 @@ function selectImageResult(index){
 function clearSelectedImage(){ currentPhoto=null; currentPhotoChanged=true; selectedImageResult=null; document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active')); resetPhoto(); setImageSearchStatus('Foto rimossa. Puoi caricarne una nuova o cercarla di nuovo.'); }
 function getProviderLabel(provider){
   const p = provider || imageSearchConfig.provider;
-  if(p === 'google') return 'Google';
-  if(p === 'bing') return 'Bing';
-  if(p === 'google-then-bing') return 'Google → Bing';
-  if(p === 'bing-then-google') return 'Bing → Google';
-  if(p === 'proxy') return 'endpoint custom';
+  if(p === 'opensource') return 'Openverse + Wikimedia Commons';
   return p || 'provider';
 }
 function normalizeProviderResult(item){
@@ -1325,51 +1315,75 @@ async function searchGoogleImages(query, ctx){
 }
 async function searchImagesWithProvider(query, ctx){
   if(imageSearchConfig.enabled && imageSearchConfig.endpoint){
-    const res = await fetch(imageSearchConfig.endpoint, {method:'POST',headers:{'Content-Type':'application/json',...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})},body:JSON.stringify({query,context:ctx,provider:imageSearchConfig.provider})});
+    const res = await fetch(imageSearchConfig.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})
+      },
+      body: JSON.stringify({
+        query,
+        context: ctx,
+        provider: imageSearchConfig.provider
+      })
+    });
+
     if(!res.ok) throw new Error('Servizio immagini non raggiungibile');
+
     const data = await res.json();
-    return (Array.isArray(data.results) ? data.results : []).map(normalizeProviderResult);
+    return Array.isArray(data.results) ? data.results : [];
   }
-  const provider = imageSearchConfig.provider || 'bing';
-  let combined = [];
-  if(provider === 'bing'){
-    combined = await searchBingImages(query, ctx);
-  } else if(provider === 'google'){
-    combined = await searchGoogleImages(query, ctx);
-  } else if(provider === 'google-then-bing'){
-    const g = await searchGoogleImages(query, ctx).catch(()=>[]);
-    const b = g.length >= 5 ? [] : await searchBingImages(query, ctx).catch(()=>[]);
-    combined = [...g, ...b];
-  } else if(provider === 'bing-then-google'){
-    const b = await searchBingImages(query, ctx).catch(()=>[]);
-    const g = b.length >= 5 ? [] : await searchGoogleImages(query, ctx).catch(()=>[]);
-    combined = [...b, ...g];
-  } else {
-    throw new Error('Provider immagini non supportato');
+
+  const [wikimediaResults, openverseResults] = await Promise.allSettled([
+    searchWikimediaCommons(query, ctx),
+    searchOpenverse(query, ctx)
+  ]);
+
+  const combined = [];
+
+  if(wikimediaResults.status === 'fulfilled') {
+    combined.push(...wikimediaResults.value);
   }
+
+  if(openverseResults.status === 'fulfilled') {
+    combined.push(...openverseResults.value);
+  }
+
   const dedupe = new Map();
+
   combined.forEach(item => {
-    const normalized = normalizeProviderResult(item);
-    const key = normalized.full || normalized.thumb || normalized.pageUrl || normalized.id;
-    if(key && !dedupe.has(key)) dedupe.set(key, normalized);
+    const key = item.full || item.thumb || item.pageUrl || item.id;
+    if(key && !dedupe.has(key)) dedupe.set(key, item);
   });
+
   return [...dedupe.values()]
-    .map(item => ({...item, score: scoreImageResult(item, ctx)}))
+    .map(item => ({ ...item, score: scoreImageResult(item, ctx) }))
     .filter(item => item.score >= 10)
-    .sort((a,b)=> (b.score||0) - (a.score||0))
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
     .slice(0, imageSearchConfig.maxResults || 12);
 }
 async function findCanImage(){
   const ctx = buildImageSearchContext();
   const query = ctx.baseQuery;
-  if(!query){ toast('Compila almeno brand o prodotto','error'); return; }
+
+  if(!query){
+    toast('Compila almeno brand o prodotto','error');
+    return;
+  }
+
   const btn = document.getElementById('findImageBtn');
-  if(btn){ btn.disabled = true; btn.textContent = 'Cerco...'; }
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Cerco...';
+  }
+
   const terms = buildStrictSearchTerms(ctx);
   setImageSearchStatus(`Ricerca avanzata con ${getProviderLabel()}: ${query}. Query provate: ${terms.slice(0,3).join(' · ')}`);
+
   try {
     const results = await searchImagesWithProvider(query, ctx);
     renderImageSearchResults(results);
+
     if(results.length){
       const top = results[0];
       setImageSearchStatus(`Trovate ${results.length} immagini compatibili da ${getProviderLabel()}. Migliore risultato: ${top.title || 'immagine'}${top.source ? ' · ' + top.source : ''}.`);
@@ -1378,6 +1392,18 @@ async function findCanImage(){
       toast('Nessuna immagine precisa trovata','error');
     }
   }
+  catch(e){
+    console.error(e);
+    setImageSearchStatus('Errore nella ricerca immagine online.');
+    toast('Ricerca immagine non riuscita','error');
+  }
+  finally {
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = 'Trova immagine';
+    }
+  }
+}
   catch(e){
     console.error(e);
     setImageSearchStatus(e && e.message ? e.message : 'Errore nella ricerca immagine online.');

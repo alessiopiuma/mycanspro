@@ -547,7 +547,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
             Rimuovi foto
           </button>
         </div>
-        <div class="image-search-status" id="imageSearchStatus">Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare candidate in automatico.</div>
+        <div class="image-search-status" id="imageSearchStatus">Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online con Google o Bing.</div>
         <div class="image-search-results" id="imageSearchResults"></div>
       </div>
       <div class="field-row3">
@@ -694,11 +694,16 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 const STORAGE_KEY = 'mycanspro_collection_v2';
 const imageSearchConfig = {
-  enabled: false,
-  provider: 'custom-endpoint',
+  enabled: true,
+  provider: 'bing', // 'bing' | 'google' | 'bing-then-google' | 'google-then-bing' | 'proxy'
   endpoint: '',
   apiKey: '',
-  mockResults: true
+  bingApiKey: '',
+  googleApiKey: '',
+  googleCx: '',
+  maxResults: 12,
+  market: 'it-IT',
+  safeSearch: 'Moderate'
 };
 
 let cans = [];
@@ -984,7 +989,7 @@ function renderStats(){
 function openAdd(){
   editId=null; currentPhoto=null; currentPhotoChanged=false; currentRating=0;
   resetImageSearchResults();
-  setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare candidate in automatico.');
+  setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online con Google o Bing.');
   document.getElementById('modalTitle').textContent='Nuova Lattina';
   ['fBrand','fProduct','fVariant','fYear','fCountry','fVolume','fCond','fCat','fRarity','fValue','fSource','fCollectionType','fNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnDel').style.display='none';
@@ -1038,46 +1043,349 @@ function setRating(v){ currentRating=v; updateStars(v); }
 function updateStars(v){ document.querySelectorAll('#ratingStars .star').forEach((s,i)=>s.classList.toggle('active',i<v)); currentRating=v; }
 function setImageSearchStatus(msg){ const el = document.getElementById('imageSearchStatus'); if(el) el.textContent = msg; }
 function resetImageSearchResults(){ imageSearchResults=[]; selectedImageResult=null; const wrap=document.getElementById('imageSearchResults'); if(wrap){ wrap.innerHTML=''; wrap.classList.remove('show'); } }
+function buildImageSearchContext(){
+  const brand = document.getElementById('fBrand').value.trim();
+  const product = document.getElementById('fProduct').value.trim();
+  const variant = document.getElementById('fVariant').value.trim();
+  const volumeRaw = document.getElementById('fVolume').value.trim();
+  const country = document.getElementById('fCountry').value.trim();
+  const category = document.getElementById('fCat').value.trim();
+  const volume = volumeRaw ? `${volumeRaw}ml` : '';
+  const rawParts = [brand, product, variant, volume, category, country].filter(Boolean);
+  const seen = new Set();
+  const deduped = rawParts.filter(part => {
+    const key = part.toLowerCase();
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const baseQuery = deduped.join(' ').replace(/\s+/g,' ').trim();
+  return { brand, product, variant, volume, country, category, baseQuery };
+}
 function buildImageSearchQuery(){
-  const parts=[document.getElementById('fBrand').value.trim(),document.getElementById('fProduct').value.trim(),document.getElementById('fVariant').value.trim(),document.getElementById('fVolume').value.trim()?document.getElementById('fVolume').value.trim()+'ml':'',document.getElementById('fCountry').value.trim(),'lattina'].filter(Boolean);
-  return parts.join(' ');
+  return buildImageSearchContext().baseQuery;
+}
+function normalizeSearchText(str){
+  return String(str || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[_|/]+/g,' ')
+    .replace(/[^a-z0-9+\-\s]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function uniqueTokens(list){
+  const seen = new Set();
+  return list.filter(item => {
+    const key = normalizeSearchText(item);
+    if(!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function tokenize(str){
+  const stop = new Set(['the','and','for','with','from','una','uno','per','con','del','della','dello','drink','bibita','bevanda','lattina','can','cans']);
+  return uniqueTokens(normalizeSearchText(str).split(' ').filter(t => t && t.length > 1 && !stop.has(t)));
+}
+function categoryHints(category){
+  const key = normalizeSearchText(category);
+  if(key.includes('energy')) return ['energy drink can','energy drink','can'];
+  if(key.includes('cola')) return ['cola can','soda can','can'];
+  if(key.includes('lemon')) return ['lemon soda can','soda can','can'];
+  if(key.includes('soft')) return ['soft drink can','soda can','can'];
+  if(key.includes('tea')) return ['iced tea can','tea can','can'];
+  if(key.includes('beer') || key.includes('birra')) return ['beer can','can'];
+  if(key.includes('water') || key.includes('acqua')) return ['water can','can'];
+  return ['beverage can','drink can','can'];
+}
+function buildStrictSearchTerms(ctx){
+  const core = [ctx.brand, ctx.product, ctx.variant].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+  const coreWithVol = [core, ctx.volume].filter(Boolean).join(' ').trim();
+  const hints = categoryHints(ctx.category);
+  const variants = uniqueTokens([
+    [coreWithVol, hints[0]].filter(Boolean).join(' '),
+    [core, hints[0]].filter(Boolean).join(' '),
+    [coreWithVol, hints[1]].filter(Boolean).join(' '),
+    [core, hints[1]].filter(Boolean).join(' '),
+    [ctx.brand, ctx.variant, hints[0]].filter(Boolean).join(' '),
+    [ctx.product, ctx.variant, hints[0]].filter(Boolean).join(' '),
+    [ctx.brand, ctx.product, hints[2]].filter(Boolean).join(' '),
+    [ctx.baseQuery, 'packaging'].filter(Boolean).join(' ')
+  ].filter(Boolean));
+  return variants.slice(0,8);
+}
+function escapeHtml(str){
+  return String(str || '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch] || ch));
+}
+function scoreImageResult(item, ctx){
+  const hay = normalizeSearchText([item.title, item.source, item.pageUrl, item.full].filter(Boolean).join(' '));
+  const brandTokens = tokenize(ctx.brand);
+  const productTokens = tokenize(ctx.product);
+  const variantTokens = tokenize(ctx.variant);
+  const countryTokens = tokenize(ctx.country);
+  const volumeTokens = tokenize(ctx.volume);
+  const categoryTokens = tokenize(ctx.category);
+  let score = 0;
+  let matchedBrand = 0;
+  let matchedCore = 0;
+  const addMatch = (tokens, pts, bucket) => {
+    let local = 0;
+    tokens.forEach(tok => {
+      if(hay.includes(tok)){
+        score += pts;
+        local += 1;
+      }
+    });
+    if(bucket === 'brand') matchedBrand += local;
+    if(bucket === 'core') matchedCore += local;
+  };
+  addMatch(brandTokens, 20, 'brand');
+  addMatch(productTokens, 16, 'core');
+  addMatch(variantTokens, 22, 'core');
+  addMatch(volumeTokens, 12, 'core');
+  addMatch(categoryTokens, 10, 'core');
+  addMatch(countryTokens, 5, null);
+  const exactPhrases = uniqueTokens([
+    [ctx.brand, ctx.product].filter(Boolean).join(' '),
+    [ctx.brand, ctx.variant].filter(Boolean).join(' '),
+    [ctx.product, ctx.variant].filter(Boolean).join(' '),
+    [ctx.brand, ctx.product, ctx.variant].filter(Boolean).join(' ')
+  ]).map(normalizeSearchText);
+  exactPhrases.forEach(phrase => { if(phrase && hay.includes(phrase)) score += 35; });
+  ['can','tin','aluminum','beverage','packaging'].forEach(tok => { if(hay.includes(tok)) score += 4; });
+  ['glass','cocktail','mojito','cup','mug','bottle','poster','logo','advertisement','ad ','flyer','person','man','woman','portrait','painting','drawing','illustration','vector'].forEach(tok => { if(hay.includes(tok)) score -= 18; });
+  if(brandTokens.length && matchedBrand === 0) score -= 60;
+  if((productTokens.length || variantTokens.length) && matchedCore === 0) score -= 28;
+  if(!/(^|\s)(can|tin|aluminum|beverage|packaging)(\s|$)/.test(hay)) score -= 10;
+  return score;
+}
+async function searchWikimediaCommons(query, ctx){
+  const terms = buildStrictSearchTerms(ctx || buildImageSearchContext());
+  const seen = new Set();
+  const out = [];
+  for(const term of terms){
+    if(out.length >= 16) break;
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrnamespace=6&gsrlimit=8&prop=imageinfo|info&iiprop=url&iiurlwidth=500&inprop=url&format=json&origin=*`;
+    const res = await fetch(url);
+    if(!res.ok) continue;
+    const data = await res.json();
+    const pages = Object.values((data && data.query && data.query.pages) || {});
+    for(const page of pages){
+      const imageInfo = page && page.imageinfo && page.imageinfo[0];
+      const full = imageInfo && (imageInfo.url || imageInfo.descriptionurl) ? (imageInfo.url || imageInfo.descriptionurl) : '';
+      const thumb = imageInfo && (imageInfo.thumburl || imageInfo.url) ? (imageInfo.thumburl || imageInfo.url) : '';
+      const title = String(page.title || '').replace(/^File:/i,'').replace(/[_]+/g,' ');
+      if(!thumb || !full || seen.has(full)) continue;
+      seen.add(full);
+      out.push({
+        id: page.pageid || full,
+        title,
+        source: 'Wikimedia Commons',
+        thumb,
+        full,
+        pageUrl: page.fullurl || ''
+      });
+      if(out.length >= 16) break;
+    }
+  }
+  return out;
+}
+async function searchOpenverse(query, ctx){
+  const terms = buildStrictSearchTerms(ctx || buildImageSearchContext());
+  const seen = new Set();
+  const out = [];
+  for(const term of terms.slice(0,6)){
+    if(out.length >= 18) break;
+    const url = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(term)}&page_size=10`;
+    const res = await fetch(url);
+    if(!res.ok) continue;
+    const data = await res.json();
+    const results = Array.isArray(data && data.results) ? data.results : [];
+    for(const item of results){
+      const full = item.url || item.foreign_landing_url || '';
+      const thumb = item.thumbnail || item.url || '';
+      if(!thumb || !full || seen.has(full)) continue;
+      seen.add(full);
+      out.push({
+        id: item.id || full,
+        title: item.title || item.creator || 'Immagine',
+        source: `Openverse · ${item.source || 'catalogo web'}`,
+        thumb,
+        full,
+        pageUrl: item.foreign_landing_url || ''
+      });
+      if(out.length >= 18) break;
+    }
+  }
+  return out;
 }
 function renderImageSearchResults(results){
   imageSearchResults = results || []; selectedImageResult = null;
   const wrap=document.getElementById('imageSearchResults'); if(!wrap) return;
   if(!imageSearchResults.length){ wrap.innerHTML=''; wrap.classList.remove('show'); return; }
-  wrap.innerHTML = imageSearchResults.map((item, idx)=>`<button type="button" class="image-result" data-idx="${idx}"><div class="image-result-thumb">${item.thumb ? `<img src="${item.thumb}" alt="${item.title||'Risultato immagine'}">` : '🥫'}</div><div class="image-result-meta"><div class="image-result-title">${item.title||'Immagine trovata'}</div><div class="image-result-source">${item.source||'servizio immagini'}</div></div></button>`).join('');
+  wrap.innerHTML = imageSearchResults.map((item, idx)=>`<button type="button" class="image-result" data-idx="${idx}"><div class="image-result-thumb">${item.thumb ? `<img src="${item.thumb}" alt="${escapeHtml(item.title||'Risultato immagine')}">` : '🥫'}</div><div class="image-result-meta"><div class="image-result-title">${escapeHtml(item.title||'Immagine trovata')}</div><div class="image-result-source">${escapeHtml(item.source||'servizio immagini')}${typeof item.score === 'number' ? ` · score ${item.score}` : ''}</div></div></button>`).join('');
   wrap.classList.add('show');
 }
 function selectImageResult(index){
   const item = imageSearchResults[index]; if(!item) return;
   selectedImageResult=item; currentPhoto=item.full||item.thumb||null; currentPhotoChanged=true;
   document.querySelectorAll('.image-result').forEach((el,i)=>el.classList.toggle('active', i===index));
-  if(currentPhoto){ document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`; setImageSearchStatus('Immagine selezionata. Verrà salvata insieme alla lattina.'); }
+  if(currentPhoto){ document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`; setImageSearchStatus(`Immagine selezionata${item.source ? ' da ' + item.source : ''}. Verrà salvata insieme alla lattina.`); }
 }
 function clearSelectedImage(){ currentPhoto=null; currentPhotoChanged=true; selectedImageResult=null; document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active')); resetPhoto(); setImageSearchStatus('Foto rimossa. Puoi caricarne una nuova o cercarla di nuovo.'); }
-async function searchImagesWithProvider(query){
+function getProviderLabel(provider){
+  const p = provider || imageSearchConfig.provider;
+  if(p === 'google') return 'Google';
+  if(p === 'bing') return 'Bing';
+  if(p === 'google-then-bing') return 'Google → Bing';
+  if(p === 'bing-then-google') return 'Bing → Google';
+  if(p === 'proxy') return 'endpoint custom';
+  return p || 'provider';
+}
+function normalizeProviderResult(item){
+  return {
+    id: item.id || item.full || item.thumb || item.pageUrl || String(Math.random()),
+    title: item.title || 'Immagine',
+    source: item.source || 'servizio immagini',
+    thumb: item.thumb || item.thumbnail || item.full || '',
+    full: item.full || item.url || item.thumb || '',
+    pageUrl: item.pageUrl || item.contextUrl || item.hostPageUrl || ''
+  };
+}
+async function searchBingImages(query, ctx){
+  const key = imageSearchConfig.bingApiKey || imageSearchConfig.apiKey;
+  if(!key) throw new Error('Configura bingApiKey per usare Bing Image Search');
+  const terms = buildStrictSearchTerms(ctx || buildImageSearchContext());
+  const out = [];
+  const seen = new Set();
+  for(const term of terms.slice(0,6)){
+    if(out.length >= 18) break;
+    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${encodeURIComponent(term)}&count=10&mkt=${encodeURIComponent(imageSearchConfig.market || 'it-IT')}&safeSearch=${encodeURIComponent(imageSearchConfig.safeSearch || 'Moderate')}&imageType=Photo`;
+    const res = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': key } });
+    if(!res.ok){
+      if(res.status === 401 || res.status === 403) throw new Error('Chiave Bing non valida o non autorizzata');
+      continue;
+    }
+    const data = await res.json();
+    const items = Array.isArray(data && data.value) ? data.value : [];
+    for(const item of items){
+      const normalized = normalizeProviderResult({
+        id: item.imageId || item.webSearchUrl || item.contentUrl,
+        title: item.name || item.hostPageDisplayUrl || 'Immagine',
+        source: 'Bing Images',
+        thumb: item.thumbnailUrl || item.contentUrl,
+        full: item.contentUrl || item.thumbnailUrl,
+        pageUrl: item.hostPageUrl || item.webSearchUrl || ''
+      });
+      const dedupeKey = normalized.full || normalized.thumb || normalized.pageUrl || normalized.id;
+      if(!normalized.thumb || !normalized.full || seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      out.push(normalized);
+      if(out.length >= 18) break;
+    }
+  }
+  return out;
+}
+async function searchGoogleImages(query, ctx){
+  const key = imageSearchConfig.googleApiKey || imageSearchConfig.apiKey;
+  const cx = imageSearchConfig.googleCx;
+  if(!key) throw new Error('Configura googleApiKey per usare Google');
+  if(!cx) throw new Error('Configura googleCx per usare Google Programmable Search');
+  const terms = buildStrictSearchTerms(ctx || buildImageSearchContext());
+  const out = [];
+  const seen = new Set();
+  for(const term of terms.slice(0,6)){
+    if(out.length >= 18) break;
+    const url = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(key)}&cx=${encodeURIComponent(cx)}&searchType=image&safe=active&imgType=photo&num=10&hl=it&q=${encodeURIComponent(term)}`;
+    const res = await fetch(url);
+    if(!res.ok){
+      if(res.status === 401 || res.status === 403) throw new Error('Chiave Google non valida o non autorizzata');
+      continue;
+    }
+    const data = await res.json();
+    const items = Array.isArray(data && data.items) ? data.items : [];
+    for(const item of items){
+      const image = item.image || {};
+      const normalized = normalizeProviderResult({
+        id: item.cacheId || item.link || item.image?.contextLink,
+        title: item.title || item.snippet || 'Immagine',
+        source: 'Google Images',
+        thumb: image.thumbnailLink || item.link,
+        full: item.link || image.thumbnailLink,
+        pageUrl: image.contextLink || item.displayLink || ''
+      });
+      const dedupeKey = normalized.full || normalized.thumb || normalized.pageUrl || normalized.id;
+      if(!normalized.thumb || !normalized.full || seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      out.push(normalized);
+      if(out.length >= 18) break;
+    }
+  }
+  return out;
+}
+async function searchImagesWithProvider(query, ctx){
   if(imageSearchConfig.enabled && imageSearchConfig.endpoint){
-    const res = await fetch(imageSearchConfig.endpoint, {method:'POST',headers:{'Content-Type':'application/json',...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})},body:JSON.stringify({query,provider:imageSearchConfig.provider})});
+    const res = await fetch(imageSearchConfig.endpoint, {method:'POST',headers:{'Content-Type':'application/json',...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})},body:JSON.stringify({query,context:ctx,provider:imageSearchConfig.provider})});
     if(!res.ok) throw new Error('Servizio immagini non raggiungibile');
     const data = await res.json();
-    return Array.isArray(data.results) ? data.results : [];
+    return (Array.isArray(data.results) ? data.results : []).map(normalizeProviderResult);
   }
-  if(imageSearchConfig.mockResults){
-    return [1,2,3].map(i=>({id:`mock-${i}`,title:`${query} · risultato ${i}`,source:'demo locale',thumb:`https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=${300+i}&h=${300+i}&q=60&sig=${i}`,full:`https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&h=900&q=80&sig=${i}`}));
+  const provider = imageSearchConfig.provider || 'bing';
+  let combined = [];
+  if(provider === 'bing'){
+    combined = await searchBingImages(query, ctx);
+  } else if(provider === 'google'){
+    combined = await searchGoogleImages(query, ctx);
+  } else if(provider === 'google-then-bing'){
+    const g = await searchGoogleImages(query, ctx).catch(()=>[]);
+    const b = g.length >= 5 ? [] : await searchBingImages(query, ctx).catch(()=>[]);
+    combined = [...g, ...b];
+  } else if(provider === 'bing-then-google'){
+    const b = await searchBingImages(query, ctx).catch(()=>[]);
+    const g = b.length >= 5 ? [] : await searchGoogleImages(query, ctx).catch(()=>[]);
+    combined = [...b, ...g];
+  } else {
+    throw new Error('Provider immagini non supportato');
   }
-  return [];
+  const dedupe = new Map();
+  combined.forEach(item => {
+    const normalized = normalizeProviderResult(item);
+    const key = normalized.full || normalized.thumb || normalized.pageUrl || normalized.id;
+    if(key && !dedupe.has(key)) dedupe.set(key, normalized);
+  });
+  return [...dedupe.values()]
+    .map(item => ({...item, score: scoreImageResult(item, ctx)}))
+    .filter(item => item.score >= 10)
+    .sort((a,b)=> (b.score||0) - (a.score||0))
+    .slice(0, imageSearchConfig.maxResults || 12);
 }
 async function findCanImage(){
-  const query = buildImageSearchQuery();
+  const ctx = buildImageSearchContext();
+  const query = ctx.baseQuery;
   if(!query){ toast('Compila almeno brand o prodotto','error'); return; }
   const btn = document.getElementById('findImageBtn');
   if(btn){ btn.disabled = true; btn.textContent = 'Cerco...'; }
-  setImageSearchStatus(`Ricerca immagine per: ${query}`);
-  try { renderImageSearchResults(await searchImagesWithProvider(query)); }
-  catch(e){ setImageSearchStatus('Errore nella ricerca immagine.'); toast('Ricerca immagine non riuscita','error'); }
+  const terms = buildStrictSearchTerms(ctx);
+  setImageSearchStatus(`Ricerca avanzata con ${getProviderLabel()}: ${query}. Query provate: ${terms.slice(0,3).join(' · ')}`);
+  try {
+    const results = await searchImagesWithProvider(query, ctx);
+    renderImageSearchResults(results);
+    if(results.length){
+      const top = results[0];
+      setImageSearchStatus(`Trovate ${results.length} immagini compatibili da ${getProviderLabel()}. Migliore risultato: ${top.title || 'immagine'}${top.source ? ' · ' + top.source : ''}.`);
+    } else {
+      setImageSearchStatus(`Nessun risultato abbastanza coerente con ${getProviderLabel()} per: ${query}. Prova a semplificare la variante o ad aggiungere il volume.`);
+      toast('Nessuna immagine precisa trovata','error');
+    }
+  }
+  catch(e){
+    console.error(e);
+    setImageSearchStatus(e && e.message ? e.message : 'Errore nella ricerca immagine online.');
+    toast('Ricerca immagine non riuscita','error');
+  }
   finally { if(btn){ btn.disabled=false; btn.textContent='Trova immagine'; } }
 }
+
 
 function collectFormData(){
   return normalizeCan({
@@ -1133,64 +1441,7 @@ function closeDetail(){ document.getElementById('detailModal').classList.remove(
 function exportJSON(){ const blob=new Blob([JSON.stringify(cans,null,2)],{type:'application/json'}); downloadBlob(blob,'mycanspro-collection.json'); }
 function exportCSV(){ const headers=['Brand','Prodotto','Variante','Anno','Paese','Volume','Condizione','Categoria','Rarità','Tipo','Valore','Provenienza','Note','Rating']; const rows=cans.map(c=>[c.brand,c.product,c.variant,c.year,c.country,c.volume,c.condition||c.cond,c.category||c.cat,c.rarity,c.collectionType,c.valueEstimate||c.value,c.source,c.notes,c.rating].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')); const blob=new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8;'}); downloadBlob(blob,'mycanspro-collection.csv'); }
 function downloadBlob(blob, filename){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function flattenImportedData(data){
-  if(Array.isArray(data)) return data;
-  if(!data || typeof data !== 'object') return [];
-  const directKeys = ['cans','items','collection','lattine','data','records'];
-  for(const key of directKeys){
-    if(Array.isArray(data[key])) return data[key];
-  }
-  if(data.brands && typeof data.brands === 'object'){
-    const out = [];
-    Object.entries(data.brands).forEach(([brandName, value])=>{
-      const arr = Array.isArray(value) ? value : (Array.isArray(value?.items) ? value.items : Array.isArray(value?.cans) ? value.cans : []);
-      arr.forEach(item=>out.push({...item, brand: item.brand || brandName}));
-    });
-    if(out.length) return out;
-  }
-  if(data.byBrand && typeof data.byBrand === 'object'){
-    const out = [];
-    Object.entries(data.byBrand).forEach(([brandName, arr])=>{
-      (Array.isArray(arr) ? arr : []).forEach(item=>out.push({...item, brand: item.brand || brandName}));
-    });
-    if(out.length) return out;
-  }
-  return [];
-}
-
-function importJSON(input){
-  const file=input.files?.[0];
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try {
-      const data=JSON.parse(e.target.result);
-      const incoming = flattenImportedData(data).map(normalizeCan).filter(c => c.brand || c.product || c.variant || c.model);
-      if(!incoming.length){
-        toast('Nessuna lattina trovata nel JSON','error');
-        return;
-      }
-      const merged = [...incoming, ...cans];
-      const seen = new Set();
-      cans = merged.filter(c => {
-        const key = [String(c.id || '').trim(), String(c.brand || '').trim().toLowerCase(), String(c.product || '').trim().toLowerCase(), String(c.variant || c.model || '').trim().toLowerCase(), String(c.year || '').trim(), String(c.country || '').trim().toLowerCase()].join('||');
-        if(seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-      saveLocal();
-      renderBrandNav();
-      render();
-      if(currentPage==='stats') renderStats();
-      toast(`Import completato ✓ (${incoming.length} elementi)`);
-    } catch(err){
-      console.error('Import JSON error:', err);
-      toast('JSON non valido o schema non supportato','error');
-    }
-  };
-  reader.readAsText(file);
-  input.value='';
-}
+function importJSON(input){ const file=input.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try { const data=JSON.parse(e.target.result); const incoming = Array.isArray(data) ? data : (Array.isArray(data.cans) ? data.cans : []); cans = [...incoming.map(normalizeCan), ...cans].filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); saveLocal(); renderBrandNav(); render(); toast('Import completato ✓'); } catch(err){ toast('JSON non valido','error'); } }; reader.readAsText(file); input.value=''; }
 function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione?')){ cans=[]; saveLocal(); renderBrandNav(); render(); toast('Collezione cancellata'); } }
 
 function bindEvents(){
@@ -1226,6 +1477,11 @@ function bindEvents(){
   window.addEventListener('orientationchange', updateMobileLayout);
 }
 
+// Configura qui il provider immagini:
+// imageSearchConfig.provider = 'bing' oppure 'google'
+// imageSearchConfig.bingApiKey = 'LA_TUA_CHIAVE_BING'
+// imageSearchConfig.googleApiKey = 'LA_TUA_CHIAVE_GOOGLE'
+// imageSearchConfig.googleCx = 'IL_TUO_GOOGLE_CX'
 window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
 
 document.addEventListener('DOMContentLoaded', ()=>{

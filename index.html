@@ -344,7 +344,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     <div class="topbar-title" id="viewTitle">Collezione</div>
     <div class="search-box" id="searchArea">
       <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
-      <input type="text" id="searchInput" placeholder="Cerca brand, modello, paese...">
+      <input type="text" id="searchInput" placeholder="Cerca brand, prodotto, variante, paese...">
     </div>
     <div class="topbar-actions" id="topbarActions">
       <button class="btn btn-ghost btn-menu" id="menuBtn" onclick="toggleSidebar()" title="Menu" style="padding:8px 10px">
@@ -466,16 +466,17 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
         </div>
         <input type="file" id="photoFile" accept="image/*" style="display:none" onchange="loadPhoto(this)">
       </div>
-      <div class="field-row">
+      <div class="field-row3">
         <div class="field"><label>Brand *</label><input type="text" id="fBrand" placeholder="es. Coca-Cola"></div>
-        <div class="field"><label>Modello / Variante *</label><input type="text" id="fModel" placeholder="es. Edizione Mondiale 1990"></div>
+        <div class="field"><label>Prodotto *</label><input type="text" id="fProduct" placeholder="es. Coca-Cola"></div>
+        <div class="field"><label>Variante *</label><input type="text" id="fVariant" placeholder="es. Zero Sugar / Limited Edition"></div>
       </div>
       <div class="field-row3">
         <div class="field"><label>Anno</label><input type="text" id="fYear" placeholder="1994" maxlength="4"></div>
         <div class="field"><label>Paese</label><input type="text" id="fCountry" placeholder="Italia"></div>
         <div class="field"><label>Volume (ml)</label><input type="text" id="fVolume" placeholder="330"></div>
       </div>
-      <div class="field-row">
+      <div class="field-row3">
         <div class="field">
           <label>Condizioni</label>
           <select id="fCond">
@@ -492,23 +493,48 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
           <select id="fCat">
             <option value="">— seleziona —</option>
             <option value="Cola">Cola</option>
+            <option value="Lemon Soda">Lemon Soda</option>
+            <option value="Soft Drink">Soft Drink</option>
             <option value="Birra">Birra</option>
+            <option value="Tea">Tea</option>
             <option value="Succo">Succo</option>
             <option value="Energy Drink">Energy Drink</option>
             <option value="Acqua">Acqua</option>
+            <option value="Collezione">Collezione</option>
             <option value="Altra bibita">Altra bibita</option>
             <option value="Altro">Altro</option>
           </select>
         </div>
+        <div class="field">
+          <label>Rarità</label>
+          <select id="fRarity">
+            <option value="">— seleziona —</option>
+            <option value="Comune">Comune</option>
+            <option value="Non comune">Non comune</option>
+            <option value="Rara">Rara</option>
+            <option value="Molto rara">Molto rara</option>
+          </select>
+        </div>
       </div>
-      <div class="field-row">
+      <div class="field-row3">
         <div class="field">
           <label>Valore stimato (€)</label>
-          <input type="text" id="fValue" placeholder="0.00">
+          <input type="text" id="fValue" placeholder="0.00 o 1-3€">
         </div>
         <div class="field">
           <label>Provenienza</label>
           <input type="text" id="fSource" placeholder="Mercatino, online...">
+        </div>
+        <div class="field">
+          <label>Tipo collezione</label>
+          <select id="fCollectionType">
+            <option value="">— seleziona —</option>
+            <option value="Commerciale">Commerciale</option>
+            <option value="Limited">Limited</option>
+            <option value="Import">Import</option>
+            <option value="Pop Culture">Pop Culture</option>
+            <option value="Vintage">Vintage</option>
+          </select>
         </div>
       </div>
       <div class="field">
@@ -609,11 +635,11 @@ async function loadCans(){
   try {
     const q = query(collection(db, COLL), orderBy('addedAt','desc'));
     const snap = await getDocs(q);
-    cans = snap.docs.map(d=>({id:d.id,...d.data()}));
+    cans = snap.docs.map(d=>normalizeCan({id:d.id,...d.data()}));
   } catch(e){
     // fallback senza ordinamento se l'indice non esiste ancora
     const snap = await getDocs(collection(db, COLL));
-    cans = snap.docs.map(d=>({id:d.id,...d.data()}));
+    cans = snap.docs.map(d=>normalizeCan({id:d.id,...d.data()}));
   }
   showLoading(false);
   renderBrandNav();
@@ -695,6 +721,37 @@ function condColor(c){
   return '#ff4545';
 }
 
+function normalizeCan(raw){
+  const product = raw.product || raw.productName || raw.name || raw.model || '';
+  const variant = raw.variant || raw.model || '';
+  const category = raw.category || raw.cat || '';
+  const condition = raw.condition || raw.cond || '';
+  const rarity = raw.rarity || raw.rarita || raw.rarita_stimata || '';
+  const collectionType = raw.collection_type || raw.collectionType || '';
+  const valueEstimate = raw.value_estimate || raw.valueEstimate || raw.value || '';
+  return {
+    ...raw,
+    product,
+    variant,
+    category,
+    condition,
+    rarity,
+    collectionType,
+    valueEstimate,
+    model: variant || product || raw.model || '',
+    cat: category,
+    cond: condition,
+    value: valueEstimate
+  };
+}
+
+function displayName(c){
+  const product = c.product || '';
+  const variant = c.variant || c.model || '';
+  if(product && variant && variant.toLowerCase() !== product.toLowerCase()) return `${product} — ${variant}`;
+  return variant || product || 'Senza nome';
+}
+
 function starsHtml(r,small=false){
   if(!r) return '';
   const sz = small ? 12 : 14;
@@ -706,7 +763,7 @@ function getFiltered(){
   const sort = document.getElementById('sortSel').value;
   let list = cans.filter(c=>{
     const mb = activeBrand==='all' || c.brand===activeBrand;
-    const mq = !q || [c.brand,c.model,c.year,c.country,c.cat,c.notes].some(x=>x&&x.toLowerCase().includes(q));
+    const mq = !q || [c.brand,c.product,c.variant,c.model,c.year,c.country,c.category,c.cat,c.rarity,c.collectionType,c.notes].some(x=>x&&x.toLowerCase().includes(q));
     return mb && mq;
   });
   list.sort((a,b)=>{
@@ -755,10 +812,12 @@ function render(){
   if(!list.length){ grid.innerHTML=''; return; }
   const isList = grid.classList.contains('list-view');
   grid.innerHTML = list.map((c,i)=>{
-    const img = c.photoUrl ? `<img src="${c.photoUrl}" alt="${c.model}">` : `<div class="no-img">🥫</div>`;
-    const cClass = condClass(c.cond);
-    const condBadge = c.cond ? `<span class="card-cond ${cClass}">${c.cond.split(' ')[0]}</span>` : '';
-    const flags = [c.cat, c.country].filter(Boolean).map(f=>`<span class="flag">${f}</span>`).join('');
+    const title = displayName(c);
+    const img = c.photoUrl ? `<img src="${c.photoUrl}" alt="${title}">` : `<div class="no-img">🥫</div>`;
+    const cClass = condClass(c.condition || c.cond);
+    const condText = c.condition || c.cond;
+    const condBadge = condText ? `<span class="card-cond ${cClass}">${condText.split(' ')[0]}</span>` : '';
+    const flags = [c.category || c.cat, c.rarity, c.collectionType, c.country].filter(Boolean).map(f=>`<span class="flag">${f}</span>`).join('');
     const stars = c.rating ? `<div class="stars-display">${starsHtml(c.rating,true)}</div>` : '';
     return `<div class="card" style="animation-delay:${i*0.03}s" onclick="openDetail('${c.id}')">
       <div class="card-overlay">
@@ -773,7 +832,7 @@ function render(){
       <div class="card-body">
         ${isList ? '<div class="card-info">' : ''}
         <div class="card-brand">${c.brand}</div>
-        <div class="card-name" title="${c.model}">${c.model}</div>
+        <div class="card-name" title="${title}">${title}</div>
         <div class="card-meta">
           <span class="card-year">${c.year||'—'}</span>
           ${condBadge}
@@ -868,7 +927,7 @@ function renderStats(){
 function openAdd(){
   editId=null; currentPhoto=null; currentPhotoChanged=false; currentRating=0;
   document.getElementById('modalTitle').textContent='Nuova Lattina';
-  ['fBrand','fModel','fYear','fCountry','fVolume','fCond','fCat','fValue','fSource','fNotes'].forEach(id=>document.getElementById(id).value='');
+  ['fBrand','fProduct','fVariant','fYear','fCountry','fVolume','fCond','fCat','fRarity','fValue','fSource','fCollectionType','fNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnDel').style.display='none';
   resetPhoto(); updateStars(0);
   document.getElementById('addModal').classList.add('open');
@@ -880,14 +939,17 @@ function openEdit(id){
   editId=id; currentPhoto=null; currentPhotoChanged=false; currentRating=c.rating||0;
   document.getElementById('modalTitle').textContent='Modifica Lattina';
   document.getElementById('fBrand').value=c.brand;
-  document.getElementById('fModel').value=c.model;
+  document.getElementById('fProduct').value=c.product || c.brand || '';
+  document.getElementById('fVariant').value=c.variant || c.model || '';
   document.getElementById('fYear').value=c.year||'';
   document.getElementById('fCountry').value=c.country||'';
   document.getElementById('fVolume').value=c.volume||'';
   document.getElementById('fCond').value=c.cond||'';
-  document.getElementById('fCat').value=c.cat||'';
-  document.getElementById('fValue').value=c.value||'';
+  document.getElementById('fCat').value=c.category||c.cat||'';
+  document.getElementById('fRarity').value=c.rarity||'';
+  document.getElementById('fValue').value=c.valueEstimate||c.value||'';
   document.getElementById('fSource').value=c.source||'';
+  document.getElementById('fCollectionType').value=c.collectionType||'';
   document.getElementById('fNotes').value=c.notes||'';
   document.getElementById('btnDel').style.display='inline-flex';
   updateStars(currentRating);
@@ -934,20 +996,27 @@ function updateStars(v){
 
 async function saveCan(){
   const brand=document.getElementById('fBrand').value.trim();
-  const model=document.getElementById('fModel').value.trim();
-  if(!brand||!model){ toast('Brand e modello sono obbligatori','error'); return; }
+  const product=document.getElementById('fProduct').value.trim();
+  const variant=document.getElementById('fVariant').value.trim();
+  if(!brand||!product||!variant){ toast('Brand, prodotto e variante sono obbligatori','error'); return; }
   const btnSave = document.querySelector('.modal-footer .btn-primary');
   btnSave.textContent='Salvataggio...'; btnSave.disabled=true;
   const oldPhotoUrl = editId ? (cans.find(x=>x.id===editId)?.photoUrl||null) : null;
   const canData = {
-    brand, model,
+    brand, product, variant, model: variant,
     year: document.getElementById('fYear').value.trim(),
     country: document.getElementById('fCountry').value.trim(),
     volume: document.getElementById('fVolume').value.trim(),
+    condition: document.getElementById('fCond').value,
     cond: document.getElementById('fCond').value,
+    category: document.getElementById('fCat').value,
     cat: document.getElementById('fCat').value,
+    rarity: document.getElementById('fRarity').value,
+    valueEstimate: document.getElementById('fValue').value.trim(),
     value: document.getElementById('fValue').value.trim(),
     source: document.getElementById('fSource').value.trim(),
+    collectionType: document.getElementById('fCollectionType').value,
+    collection_type: document.getElementById('fCollectionType').value,
     notes: document.getElementById('fNotes').value.trim(),
     rating: currentRating,
     photoUrl: oldPhotoUrl
@@ -969,7 +1038,7 @@ async function deleteCan(){
 
 async function confirmDelete(id){
   const c=cans.find(x=>x.id===id); if(!c) return;
-  if(!confirm(`Eliminare "${c.model}"?`)) return;
+  if(!confirm(`Eliminare "${displayName(c)}"?`)) return;
   try {
     await deleteCanFromFirebase(id);
     toast('Lattina eliminata','error');
@@ -979,29 +1048,32 @@ async function confirmDelete(id){
 function openDetail(id){
   detailId=id; const c=cans.find(x=>x.id===id); if(!c) return;
   const hero=document.getElementById('dHero');
+  const title = displayName(c);
   if(c.photoUrl){
-    hero.innerHTML=`<img class="detail-hero-img" src="${c.photoUrl}" alt="${c.model}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
+    hero.innerHTML=`<img class="detail-hero-img" src="${c.photoUrl}" alt="${title}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${title}</div></div>`;
   } else {
-    hero.innerHTML=`<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
+    hero.innerHTML=`<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${title}</div></div>`;
   }
   const items=[
-    ['Anno',c.year||'—','accent'],['Paese',c.country||'—',''],['Volume',c.volume?c.volume+'ml':'—',''],
-    ['Condizioni',c.cond||'—',''],['Categoria',c.cat||'—',''],['Valore',c.value?'€'+c.value:'—','accent']
+    ['Prodotto',c.product||'—',''],['Variante',c.variant||c.model||'—',''],['Anno',c.year||'—','accent'],
+    ['Paese',c.country||'—',''],['Volume',c.volume?c.volume+'ml':'—',''],['Condizioni',c.condition||c.cond||'—',''],
+    ['Categoria',c.category||c.cat||'—',''],['Rarità',c.rarity||'—',''],['Tipo',c.collectionType||'—',''],
+    ['Valore',(c.valueEstimate||c.value)?('€'+(c.valueEstimate||c.value)):'—','accent']
   ];
   document.getElementById('dGrid').innerHTML=items.map(([k,v,cls])=>`<div class="detail-item"><div class="detail-item-key">${k}</div><div class="detail-item-val ${cls}">${v}</div></div>`).join('');
   document.getElementById('dNoteWrap').innerHTML = c.notes
     ? `<div class="detail-note">${c.notes}</div>`
     : `<div class="detail-note detail-note-empty">Nessuna nota</div>`;
-  const tags=[c.source, c.rating?'★'.repeat(c.rating):null].filter(Boolean);
+  const tags=[c.source, c.rarity, c.collectionType, c.country].filter(Boolean);
   const starStr = c.rating ? `<div class="detail-tag"><div class="stars-display" style="display:inline-flex">${starsHtml(c.rating)}</div></div>` : '';
-  document.getElementById('dTags').innerHTML = starStr + (c.source?`<span class="detail-tag">${c.source}</span>`:'');
+  document.getElementById('dTags').innerHTML = starStr + tags.map(t=>`<span class="detail-tag">${t}</span>`).join('');
   document.getElementById('detailModal').classList.add('open');
 }
 
 function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
 
 function exportJSON(){
-  const exportData = cans.map(c=>({...c, photo:undefined}));
+  const exportData = { metadata: { exportedAt: Date.now(), count: cans.length, app: 'myCansPRO' }, lattine: cans.map(c=>({...normalizeCan(c), photo:undefined})) };
   const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='mycanspro-collezione.json'; a.click();
@@ -1009,8 +1081,8 @@ function exportJSON(){
 }
 
 function exportCSV(){
-  const headers=['Brand','Modello','Anno','Paese','Volume','Condizioni','Categoria','Valore','Provenienza','Note','Valutazione'];
-  const rows=cans.map(c=>[c.brand,c.model,c.year,c.country,c.volume,c.cond,c.cat,c.value,c.source,c.notes,c.rating].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`));
+  const headers=['Brand','Prodotto','Variante','Anno','Paese','Volume','Condizioni','Categoria','Rarità','Tipo collezione','Valore','Provenienza','Note','Valutazione'];
+  const rows=cans.map(c=>[c.brand,c.product,c.variant,c.year,c.country,c.volume,c.condition||c.cond,c.category||c.cat,c.rarity,c.collectionType,c.valueEstimate||c.value,c.source,c.notes,c.rating].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`));
   const csv=[headers.map(h=>`"${h}"`).join(','),...rows.map(r=>r.join(','))].join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -1023,14 +1095,15 @@ async function importJSON(input){
   const r=new FileReader();
   r.onload=async e=>{
     try{
-      const data=JSON.parse(e.target.result);
+      const parsed=JSON.parse(e.target.result);
+      const data = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.lattine) ? parsed.lattine : null);
       if(!Array.isArray(data)) throw new Error();
       const existing=new Set(cans.map(c=>c.id));
       let count=0;
       for(const c of data){
         if(!existing.has(c.id)){
           const {id,...rest}=c;
-          await addDoc(collection(db, COLL), {...rest, addedAt: rest.addedAt||Date.now()});
+          await addDoc(collection(db, COLL), {...normalizeCan(rest), addedAt: rest.addedAt||Date.now()});
           count++;
         }
       }

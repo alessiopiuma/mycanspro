@@ -24,6 +24,8 @@
   --green: #3ddc84;
   --radius: 12px;
   --radius-sm: 7px;
+  --mobile-topbar-height: 108px;
+  --mobile-menu-height: 66px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -60,6 +62,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
 .topbar{padding:20px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:40;backdrop-filter:blur(12px)}
 .topbar-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--text);flex-shrink:0}
+.topbar-brand{display:none;align-items:baseline;gap:0;line-height:1;white-space:nowrap;min-width:0}
+.topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:20px}
+.topbar-brand .logo-pro{margin-left:2px}
 .search-box{flex:1;max-width:380px;position:relative}
 .search-box input{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px 8px 36px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
 .search-box input:focus{border-color:var(--line2)}
@@ -157,6 +162,20 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .photo-drop-label .icon{font-size:28px;margin-bottom:8px;opacity:.3}
 .photo-drop-label p{font-size:12px;color:var(--text3)}
 .photo-drop-label span{color:var(--accent);font-size:11px}
+
+.photo-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.photo-actions .btn{flex:1;justify-content:center}
+.image-search-status{margin-top:10px;font-size:12px;color:var(--text3);line-height:1.45}
+.image-search-results{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.image-search-results.show{display:grid}
+.image-result{background:var(--bg3);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .15s}
+.image-result:hover{border-color:var(--line2);transform:translateY(-1px)}
+.image-result.active{border-color:rgba(232,255,71,0.45);box-shadow:0 0 0 1px rgba(232,255,71,0.18) inset}
+.image-result-thumb{aspect-ratio:1/1;background:var(--bg4);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.image-result-thumb img{width:100%;height:100%;object-fit:cover}
+.image-result-meta{padding:8px}
+.image-result-title{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.image-result-source{font-size:10px;color:var(--text3);margin-top:2px}
 .rating-stars{display:flex;gap:4px;margin-top:2px}
 .star{font-size:18px;cursor:pointer;color:var(--text3);transition:color .1s;line-height:1}
 .star.active{color:#f5c518}
@@ -244,50 +263,100 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 /* RESPONSIVE */
 @media(max-width:768px){
-  .sidebar{width:0;transform:translateX(-100%);transition:transform .25s;z-index:60}
-  .sidebar.open{width:220px;transform:translateX(0)}
-  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:55}
-  .sidebar-overlay.open{display:block}
-  .main{margin-left:0}
-  .topbar{padding:12px 16px;gap:10px}
-  .topbar-title{font-size:16px}
-  .search-box{max-width:none;flex:1}
-  .search-box input{font-size:12px;padding:7px 10px 7px 32px}
-  .topbar-actions{gap:6px}
-  .sort-select{display:none}
-  .view-toggle{display:none}
+  body{padding-top:calc(var(--mobile-topbar-height) + var(--mobile-menu-height));}
+  .sidebar{width:min(84vw,300px);top:calc(var(--mobile-topbar-height) + var(--mobile-menu-height));bottom:0;transform:translateX(-100%);transition:transform .25s;z-index:80;box-shadow:18px 0 50px rgba(0,0,0,.45)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:75;pointer-events:none}
+  .sidebar-overlay.open{display:block;pointer-events:auto}
+  .main{margin-left:0;padding-bottom:18px}
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:90;padding:10px 12px 12px;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(14,14,15,.96);backdrop-filter:blur(16px);box-shadow:0 12px 30px rgba(0,0,0,.22)}
+  .topbar-brand{display:flex;order:1;flex:1;align-items:baseline}
+  .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:22px}
+  .topbar-title{font-size:11px;line-height:1;order:3;flex:0 0 100%;min-width:0;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase}
+  .search-box{max-width:none;flex:1 1 100%;width:100%;order:4}
+  .search-box input{font-size:13px;padding:10px 12px 10px 34px;min-height:40px}
+  .topbar-actions{gap:6px;order:2;margin-left:0;display:flex;align-items:center}
+  .sort-select,.view-toggle{display:none}
   .btn-primary span{display:none}
-  .btn-primary{padding:8px 10px}
-  .btn-menu{display:flex}
-  .content{padding:14px 16px}
-  .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-  .grid.list-view .card-img{width:64px;height:64px}
-  .stats-hero{grid-template-columns:repeat(2,1fr)}
-  .charts-row{grid-template-columns:1fr}
-  .stats-page{padding:14px 16px}
-  .detail-grid{grid-template-columns:repeat(2,1fr)}
-  .modal{max-width:100%;border-radius:14px 14px 0 0;margin-top:auto}
+  .btn-primary{display:none}
+  .btn-menu{display:flex;min-width:40px;height:40px;align-items:center;justify-content:center;padding:0 !important}
+  .content,.stats-page,#viewIo{padding:14px}
+  .section-header{margin-bottom:14px}
+  .section-header h2{font-size:16px;line-height:1.1}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card{border-radius:11px}
+  .card-img{height:132px}
+  .card-body{padding:10px}
+  .card-brand{font-size:9px;letter-spacing:1.5px}
+  .card-name{font-size:13px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.6em}
+  .card-meta{gap:8px;align-items:flex-start;flex-wrap:wrap}
+  .card-flags{margin-top:7px;gap:5px}
+  .flag{font-size:9px;padding:2px 6px}
+  .grid.list-view{grid-template-columns:1fr}
+  .grid.list-view .card{display:grid;grid-template-columns:72px 1fr;align-items:stretch}
+  .grid.list-view .card-img{width:72px;height:100%}
+  .grid.list-view .card-body{padding:10px 12px;display:block}
+  .grid.list-view .card-name{min-height:auto;-webkit-line-clamp:1;white-space:nowrap}
+  .grid.list-view .card-meta{flex-direction:row;align-items:center;justify-content:space-between}
+  .grid.list-view .card-flags{margin-top:6px}
+  .stats-hero{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+  .stat-card{padding:16px}
+  .stat-card-n{font-size:34px}
+  .stat-card-l{font-size:10px;line-height:1.2}
+  .charts-row{grid-template-columns:1fr;gap:10px;margin-bottom:16px}
+  .chart-box,.timeline-row,.io-section{padding:16px}
+  .bar-label{width:72px;font-size:11px}
+  .cond-dist{grid-template-columns:1fr}
+  .timeline-grid{overflow-x:auto;padding-bottom:6px;gap:10px}
+  .timeline-col{min-width:26px}
+  .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .detail-content{padding:16px}
+  .detail-hero-img,.detail-hero-placeholder{height:220px}
+  .detail-hero-name{font-size:22px}
+  .detail-footer{flex-direction:column-reverse}
+  .detail-footer .btn{width:100%;justify-content:center}
+  .modal,.detail-modal{max-width:100%;max-height:92dvh;border-radius:16px 16px 0 0;margin-top:auto}
   .modal-bg{align-items:flex-end;padding:0}
-  .detail-modal{max-width:100%;border-radius:14px 14px 0 0;margin-top:auto}
-  .field-row{grid-template-columns:1fr}
-  .field-row3{grid-template-columns:1fr 1fr}
-  .logo-mark{font-size:16px}
+  .modal-header,.modal-body,.modal-footer{padding-left:16px;padding-right:16px}
+  .modal-body{padding-top:16px;padding-bottom:16px}
+  .modal-footer{position:sticky;bottom:0;background:var(--bg2);padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
+  .modal-footer .btn{flex:1;justify-content:center}
+  .modal-footer .btn-danger{flex-basis:100%;margin-right:0 !important}
+  .field{margin-bottom:14px}
+  .field input,.field select,.field textarea{min-height:42px;font-size:13px}
+  .field-row,.field-row3{grid-template-columns:1fr}
+  .photo-drop{height:120px}
   .logo-tagline{display:none}
   .sidebar-footer .stats-mini{display:none}
   .nav-label{display:block}
+  .nav-item{padding:10px}
   .nav-item span,.nav-item .count{display:flex}
+  .empty{padding:3.5rem 1rem}
+  .toast{left:14px;right:14px;bottom:14px;max-width:none}
+  .bottom-nav{display:flex;pointer-events:auto}
+}
+@media(max-width:560px){
+  body{padding-top:calc(var(--mobile-topbar-height) + var(--mobile-menu-height));}
+  .topbar{padding:10px 10px 12px}
+  .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:20px}
+  .content,.stats-page,#viewIo{padding:12px}
+  .grid{gap:8px}
+  .card-img{height:118px}
+  .detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  .grid{grid-template-columns:1fr 1fr}
+  .card-img{height:108px}
+  .bnav-item{font-size:8px}
 }
 @media(min-width:769px){
   .btn-menu{display:none}
   .sidebar-overlay{display:none}
+  .topbar-brand{display:none}
 }
 /* BOTTOM NAV MOBILE */
-@media(max-width:480px){
-  .main{padding-bottom:64px}
-  .bottom-nav{display:flex}
-}
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--line);z-index:50;padding:0 8px env(safe-area-inset-bottom,0)}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:transparent;transition:color .15s}
+.bottom-nav{display:none;position:fixed;top:var(--mobile-topbar-height);left:0;right:0;bottom:auto;background:rgba(22,22,24,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);z-index:85;padding:4px 8px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:none}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;padding:8px 0;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:transparent;transition:color .15s}
 .bnav-item.active{color:var(--accent)}
 .bnav-item svg{transition:transform .15s}
 .bnav-item.active svg{transform:scale(1.1)}
@@ -311,16 +380,16 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   <nav class="nav">
     <div class="nav-section">
       <div class="nav-label">Viste</div>
-      <a class="nav-item active" onclick="showView('collection')" href="#">
+      <a class="nav-item active" data-view="collection" onclick="showView('collection'); return false;" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
         <span>Collezione</span>
         <span class="count" id="navTotal">0</span>
       </a>
-      <a class="nav-item" onclick="showView('stats')" href="#">
+      <a class="nav-item" data-view="stats" onclick="showView('stats'); return false;" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
         <span>Statistiche</span>
       </a>
-      <a class="nav-item" onclick="showView('io')" href="#">
+      <a class="nav-item" data-view="io" onclick="showView('io'); return false;" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10a1 1 0 011 1v0a1 1 0 01-1 1H3a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>
         <span>Import / Export</span>
       </a>
@@ -341,6 +410,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <main class="main">
   <!-- TOPBAR -->
   <div class="topbar">
+    <div class="topbar-brand" aria-label="myCansPRO">
+      <span class="logo-my">my</span><span class="logo-cans">Cans</span><span class="logo-pro">PRO</span>
+    </div>
     <div class="topbar-title" id="viewTitle">Collezione</div>
     <div class="search-box" id="searchArea">
       <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
@@ -412,7 +484,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   </div>
 
   <!-- IO VIEW -->
-  <div id="viewIo" style="display:none;padding:24px 28px">
+  <div id="viewIo" style="display:none">
     <div class="io-section">
       <h3>Esporta Collezione</h3>
       <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Scarica tutti i dati della collezione in formato JSON.</p>
@@ -465,6 +537,18 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
           </div>
         </div>
         <input type="file" id="photoFile" accept="image/*" style="display:none" onchange="loadPhoto(this)">
+        <div class="photo-actions">
+          <button type="button" class="btn btn-ghost" id="findImageBtn" onclick="findCanImage()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+            Trova immagine
+          </button>
+          <button type="button" class="btn btn-ghost" id="clearImageBtn" onclick="clearSelectedImage()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg>
+            Rimuovi foto
+          </button>
+        </div>
+        <div class="image-search-status" id="imageSearchStatus">Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare candidate in automatico.</div>
+        <div class="image-search-results" id="imageSearchResults"></div>
       </div>
       <div class="field-row3">
         <div class="field"><label>Brand *</label><input type="text" id="fBrand" placeholder="es. Coca-Cola"></div>
@@ -578,11 +662,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bottom-nav">
-  <button class="bnav-item active" id="bn-collection" onclick="showView('collection');closeSidebarMobile()">
+  <button class="bnav-item active" id="bn-collection" data-view="collection" onclick="showView('collection');closeSidebarMobile()">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
     Collezione
   </button>
-  <button class="bnav-item" id="bn-stats" onclick="showView('stats');closeSidebarMobile()">
+  <button class="bnav-item" id="bn-stats" data-view="stats" onclick="showView('stats');closeSidebarMobile()">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
     Statistiche
   </button>
@@ -590,7 +674,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 4v8M4 8h8"/></svg>
     Aggiungi
   </button>
-  <button class="bnav-item" id="bn-io" onclick="showView('io');closeSidebarMobile()">
+  <button class="bnav-item" id="bn-io" data-view="io" onclick="showView('io');closeSidebarMobile()">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
     Export
   </button>
@@ -603,84 +687,52 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <!-- TOAST -->
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
 
-<script type="module">
-// ─── FIREBASE CONFIG ───────────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC46Mh3TzeFUfsegiaFRwQ1sYtQKjQnqcc",
-  authDomain: "mycanspro.firebaseapp.com",
-  projectId: "mycanspro",
-  storageBucket: "mycanspro.firebasestorage.app",
-  messagingSenderId: "66714134251",
-  appId: "1:66714134251:web:90e2777d1be6b3347b00ae"
+<script>
+(function(){
+'use strict';
+
+const STORAGE_KEY = 'mycanspro_collection_v2';
+const imageSearchConfig = {
+  enabled: false,
+  provider: 'custom-endpoint',
+  endpoint: '',
+  apiKey: '',
+  mockResults: true
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const COLL = 'lattine';
-
-// ─── STATE ─────────────────────────────────────────────────────────
 let cans = [];
 let currentPhoto = null, currentPhotoChanged = false;
 let editId = null, detailId = null, currentRating = 0;
 let viewMode = 'grid', activeBrand = 'all', currentPage = 'collection';
+let imageSearchResults = [];
+let selectedImageResult = null;
 
-// ─── FIREBASE CRUD ─────────────────────────────────────────────────
-async function loadCans(){
-  showLoading(true);
+function safeId(){ return 'can_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cans)); }
+function loadLocal(){
   try {
-    const q = query(collection(db, COLL), orderBy('addedAt','desc'));
-    const snap = await getDocs(q);
-    cans = snap.docs.map(d=>normalizeCan({id:d.id,...d.data()}));
-  } catch(e){
-    // fallback senza ordinamento se l'indice non esiste ancora
-    const snap = await getDocs(collection(db, COLL));
-    cans = snap.docs.map(d=>normalizeCan({id:d.id,...d.data()}));
-  }
-  showLoading(false);
+    const raw = localStorage.getItem(STORAGE_KEY);
+    cans = raw ? JSON.parse(raw).map(normalizeCan) : [];
+  } catch(e){ cans = []; }
+}
+
+function loadCans(){
+  showLoading(true);
+  loadLocal();
   renderBrandNav();
   render();
+  showLoading(false);
 }
 
-async function saveCanToFirebase(canData, photoBase64, oldPhotoUrl){
-  // Upload foto se cambiata
-  let photoUrl = canData.photoUrl || null;
-  if(photoBase64 && currentPhotoChanged){
-    try {
-      const storageRef = ref(storage, `lattine/${Date.now()}.jpg`);
-      await uploadString(storageRef, photoBase64, 'data_url');
-      photoUrl = await getDownloadURL(storageRef);
-      // Elimina vecchia foto
-      if(oldPhotoUrl) try{ await deleteObject(ref(storage, oldPhotoUrl)); }catch(e){}
-    } catch(e){ toast('Errore upload foto','error'); }
-  } else if(!photoBase64 && currentPhotoChanged){
-    // Foto rimossa
-    if(oldPhotoUrl) try{ await deleteObject(ref(storage, oldPhotoUrl)); }catch(e){}
-    photoUrl = null;
-  }
-
-  const data = {...canData, photoUrl, photo: null}; // non salviamo base64 su Firestore
-  delete data.photo;
-
-  if(editId){
-    await updateDoc(doc(db, COLL, editId), data);
-    toast('Lattina aggiornata ✓');
-  } else {
-    await addDoc(collection(db, COLL), {...data, addedAt: Date.now()});
-    toast('Lattina aggiunta alla collezione ✓');
-  }
-  await loadCans();
-}
-
-async function deleteCanFromFirebase(id){
-  const c = cans.find(x=>x.id===id);
-  if(c?.photoUrl) try{ await deleteObject(ref(storage, c.photoUrl)); }catch(e){}
-  await deleteDoc(doc(db, COLL, id));
-  await loadCans();
+function toast(msg, type='success'){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.className = 'toast ' + type;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
 }
 
 function showLoading(on){
@@ -688,22 +740,13 @@ function showLoading(on){
   if(!el){
     el = document.createElement('div');
     el.id = 'loadingBar';
-    el.style.cssText='position:fixed;top:0;left:0;right:0;height:2px;background:var(--accent);z-index:9999;transition:opacity .3s';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;height:2px;background:var(--accent);z-index:9999;transition:opacity .3s;pointer-events:none';
     document.body.appendChild(el);
   }
   el.style.opacity = on ? '1' : '0';
 }
 
-function toast(msg, type='success'){
-  const t = document.getElementById('toast');
-  t.className = 'toast ' + type;
-  document.getElementById('toastMsg').textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2800);
-}
-
-function getBrands(){ return [...new Set(cans.map(c=>c.brand))].sort(); }
-
+function getBrands(){ return [...new Set(cans.map(c=>c.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); }
 function condClass(c){
   if(!c) return '';
   if(c.includes('Mint')) return 'cond-mint';
@@ -731,6 +774,8 @@ function normalizeCan(raw){
   const valueEstimate = raw.value_estimate || raw.valueEstimate || raw.value || '';
   return {
     ...raw,
+    id: raw.id || safeId(),
+    brand: raw.brand || '',
     product,
     variant,
     category,
@@ -741,7 +786,10 @@ function normalizeCan(raw){
     model: variant || product || raw.model || '',
     cat: category,
     cond: condition,
-    value: valueEstimate
+    value: valueEstimate,
+    addedAt: raw.addedAt || Date.now(),
+    photoUrl: raw.photoUrl || raw.photo || null,
+    rating: Number(raw.rating || 0)
   };
 }
 
@@ -751,7 +799,6 @@ function displayName(c){
   if(product && variant && variant.toLowerCase() !== product.toLowerCase()) return `${product} — ${variant}`;
   return variant || product || 'Senza nome';
 }
-
 function starsHtml(r,small=false){
   if(!r) return '';
   const sz = small ? 12 : 14;
@@ -759,16 +806,16 @@ function starsHtml(r,small=false){
 }
 
 function getFiltered(){
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const sort = document.getElementById('sortSel').value;
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const sort = document.getElementById('sortSel')?.value || 'newest';
   let list = cans.filter(c=>{
     const mb = activeBrand==='all' || c.brand===activeBrand;
-    const mq = !q || [c.brand,c.product,c.variant,c.model,c.year,c.country,c.category,c.cat,c.rarity,c.collectionType,c.notes].some(x=>x&&x.toLowerCase().includes(q));
+    const mq = !q || [c.brand,c.product,c.variant,c.model,c.year,c.country,c.category,c.cat,c.rarity,c.collectionType,c.notes].some(x=>x&&String(x).toLowerCase().includes(q));
     return mb && mq;
   });
   list.sort((a,b)=>{
-    if(sort==='name') return a.model.localeCompare(b.model);
-    if(sort==='brand') return a.brand.localeCompare(b.brand);
+    if(sort==='name') return (displayName(a)).localeCompare(displayName(b));
+    if(sort==='brand') return (a.brand||'').localeCompare(b.brand||'');
     if(sort==='year-desc') return (parseInt(b.year)||0)-(parseInt(a.year)||0);
     if(sort==='year-asc') return (parseInt(a.year)||0)-(parseInt(b.year)||0);
     if(sort==='rating') return (b.rating||0)-(a.rating||0);
@@ -779,13 +826,14 @@ function getFiltered(){
 
 function renderBrandNav(){
   const el = document.getElementById('brandNav');
+  if(!el) return;
   const brands = getBrands();
   el.innerHTML = '<div class="nav-label">Brand</div>';
   const allEl = document.createElement('a');
   allEl.className = 'nav-item' + (activeBrand==='all' ? ' active' : '');
   allEl.href = '#';
   allEl.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/></svg><span>Tutti</span><span class="count">${cans.length}</span>`;
-  allEl.onclick = e=>{e.preventDefault();activeBrand='all';renderBrandNav();render();};
+  allEl.addEventListener('click', e=>{e.preventDefault();activeBrand='all';renderBrandNav();render(); closeSidebarMobile();});
   el.appendChild(allEl);
   const colors=['#e8ff47','#47d4ff','#ff6b35','#3ddc84','#ff4545','#c084fc','#fb923c'];
   brands.forEach((b,i)=>{
@@ -794,7 +842,7 @@ function renderBrandNav(){
     a.href='#';
     a.className='nav-item'+(activeBrand===b?' active':'');
     a.innerHTML=`<span class="dot" style="background:${colors[i%colors.length]}"></span><span>${b}</span><span class="count">${n}</span>`;
-    a.onclick=e=>{e.preventDefault();activeBrand=b;renderBrandNav();render();};
+    a.addEventListener('click', e=>{e.preventDefault();activeBrand=b;renderBrandNav();render(); closeSidebarMobile();});
     el.appendChild(a);
   });
 }
@@ -803,35 +851,36 @@ function render(){
   if(currentPage!=='collection') return;
   const list = getFiltered();
   const grid = document.getElementById('grid');
+  if(!grid) return;
   const sub = document.getElementById('collectionSubtitle');
-  sub.textContent = activeBrand==='all' ? `Tutte le lattine (${list.length})` : `${activeBrand} (${list.length})`;
-  document.getElementById('emptyMsg').style.display = list.length ? 'none' : 'block';
-  document.getElementById('navTotal').textContent = cans.length;
-  document.getElementById('sTotal').textContent = cans.length;
-  document.getElementById('sBrands').textContent = getBrands().length;
+  if(sub) sub.textContent = activeBrand==='all' ? `Tutte le lattine (${list.length})` : `${activeBrand} (${list.length})`;
+  const empty = document.getElementById('emptyMsg');
+  if(empty) empty.style.display = list.length ? 'none' : 'block';
+  const navTotal=document.getElementById('navTotal'); if(navTotal) navTotal.textContent = cans.length;
+  const sTotal=document.getElementById('sTotal'); if(sTotal) sTotal.textContent = cans.length;
+  const sBrands=document.getElementById('sBrands'); if(sBrands) sBrands.textContent = getBrands().length;
   if(!list.length){ grid.innerHTML=''; return; }
   const isList = grid.classList.contains('list-view');
   grid.innerHTML = list.map((c,i)=>{
     const title = displayName(c);
     const img = c.photoUrl ? `<img src="${c.photoUrl}" alt="${title}">` : `<div class="no-img">🥫</div>`;
-    const cClass = condClass(c.condition || c.cond);
     const condText = c.condition || c.cond;
-    const condBadge = condText ? `<span class="card-cond ${cClass}">${condText.split(' ')[0]}</span>` : '';
+    const condBadge = condText ? `<span class="card-cond ${condClass(condText)}">${condText.split(' ')[0]}</span>` : '';
     const flags = [c.category || c.cat, c.rarity, c.collectionType, c.country].filter(Boolean).map(f=>`<span class="flag">${f}</span>`).join('');
     const stars = c.rating ? `<div class="stars-display">${starsHtml(c.rating,true)}</div>` : '';
-    return `<div class="card" style="animation-delay:${i*0.03}s" onclick="openDetail('${c.id}')">
+    return `<div class="card" style="animation-delay:${i*0.03}s" data-open-detail="${c.id}">
       <div class="card-overlay">
-        <div class="card-overlay-btn" onclick="event.stopPropagation();openEdit('${c.id}')" title="Modifica">
+        <div class="card-overlay-btn" data-edit-id="${c.id}" title="Modifica">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
         </div>
-        <div class="card-overlay-btn" onclick="event.stopPropagation();confirmDelete('${c.id}')" title="Elimina">
+        <div class="card-overlay-btn" data-delete-id="${c.id}" title="Elimina">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10"/></svg>
         </div>
       </div>
       <div class="card-img">${img}<div class="img-overlay"></div></div>
       <div class="card-body">
         ${isList ? '<div class="card-info">' : ''}
-        <div class="card-brand">${c.brand}</div>
+        <div class="card-brand">${c.brand || '—'}</div>
         <div class="card-name" title="${title}">${title}</div>
         <div class="card-meta">
           <span class="card-year">${c.year||'—'}</span>
@@ -847,41 +896,54 @@ function render(){
 function setView(v){
   viewMode = v;
   const grid = document.getElementById('grid');
-  grid.classList.toggle('list-view', v==='list');
-  document.getElementById('gridBtn').classList.toggle('active', v==='grid');
-  document.getElementById('listBtn').classList.toggle('active', v==='list');
+  if(grid) grid.classList.toggle('list-view', v==='list');
+  document.getElementById('gridBtn')?.classList.toggle('active', v==='grid');
+  document.getElementById('listBtn')?.classList.toggle('active', v==='list');
   render();
 }
 
-function toggleSidebar(){
+function toggleSidebar(force){
   const sb=document.getElementById('sidebar-el');
   const ov=document.getElementById('sidebarOverlay');
-  sb.classList.toggle('open');
-  ov.classList.toggle('open');
+  if(!sb || !ov) return;
+  const shouldOpen = typeof force === 'boolean' ? force : !sb.classList.contains('open');
+  sb.classList.toggle('open', shouldOpen);
+  ov.classList.toggle('open', shouldOpen);
 }
-function closeSidebarMobile(){
-  document.getElementById('sidebar-el').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('open');
+function closeSidebarMobile(){ toggleSidebar(false); }
+
+function updateMobileLayout(){
+  const isMobile = window.innerWidth <= 768;
+  const topbar = document.querySelector('.topbar');
+  if(!topbar) return;
+  if(isMobile){
+    const topbarHeight = Math.ceil(topbar.offsetHeight || 56);
+    const menuHeight = document.querySelector('.bottom-nav')?.offsetHeight || 60;
+    document.documentElement.style.setProperty('--mobile-topbar-height', topbarHeight + 'px');
+    document.documentElement.style.setProperty('--mobile-menu-height', menuHeight + 'px');
+  } else {
+    document.documentElement.style.setProperty('--mobile-topbar-height', '0px');
+    document.documentElement.style.setProperty('--mobile-menu-height', '0px');
+  }
 }
 
-function showView(v){
+function showView(v, triggerEl=null){
   currentPage = v;
-  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  event.currentTarget && event.currentTarget.classList.add('active');
+  document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.remove('active'));
+  const activeEl = triggerEl || document.querySelector(`.nav-item[data-view="${v}"]`);
+  if(activeEl) activeEl.classList.add('active');
   document.getElementById('viewCollection').style.display = v==='collection' ? 'block' : 'none';
   document.getElementById('viewStats').style.display = v==='stats' ? 'block' : 'none';
   document.getElementById('viewIo').style.display = v==='io' ? 'block' : 'none';
   document.getElementById('searchArea').style.display = v==='collection' ? 'block' : 'none';
   document.getElementById('topbarActions').style.display = v==='collection' ? 'flex' : 'none';
   const titles = {collection:'Collezione', stats:'Statistiche', io:'Import / Export'};
-  document.getElementById('viewTitle').textContent = titles[v];
-  // sync bottom nav
-  ['collection','stats','io'].forEach(k=>{
-    const el=document.getElementById('bn-'+k);
-    if(el) el.classList.toggle('active', k===v);
-  });
+  document.getElementById('viewTitle').textContent = titles[v] || 'Collezione';
+  ['collection','stats','io'].forEach(k=>document.getElementById('bn-'+k)?.classList.toggle('active', k===v));
   if(v==='stats') renderStats();
   if(v==='collection') render();
+  closeSidebarMobile();
+  requestAnimationFrame(updateMobileLayout);
 }
 
 function renderStats(){
@@ -891,7 +953,6 @@ function renderStats(){
   const countries = [...new Set(cans.map(c=>c.country).filter(Boolean))];
   document.getElementById('stCountries').textContent = countries.length;
   document.getElementById('stWithPhoto').textContent = cans.filter(c=>c.photoUrl).length;
-  // Brand chart
   const brandCounts = brands.map(b=>({b,n:cans.filter(c=>c.brand===b).length})).sort((a,b)=>b.n-a.n).slice(0,8);
   const maxB = brandCounts[0]?.n||1;
   document.getElementById('brandChart').innerHTML = brandCounts.map(({b,n})=>`
@@ -900,24 +961,20 @@ function renderStats(){
       <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxB*100)}%"></div></div>
       <div class="bar-num">${n}</div>
     </div>`).join('');
-  // Cond chart
   const conds = [['Mint (perfetta)',condColor('Mint')],['Ottima',condColor('Ottima')],['Buona',condColor('Buona')],['Discreta',condColor('Discreta')],['Da restaurare',condColor('Da restaurare')]];
   document.getElementById('condChart').innerHTML = conds.map(([k,col])=>{
-    const n = cans.filter(c=>c.cond===k).length;
+    const n = cans.filter(c=>(c.condition||c.cond)===k).length;
     return `<div class="cond-item"><div class="cond-dot" style="background:${col}"></div><div class="cond-text">${k.split(' ')[0]}</div><div class="cond-count">${n}</div></div>`;
   }).join('');
-  // Timeline
   const years = cans.map(c=>parseInt(c.year)).filter(y=>!isNaN(y)&&y>1900&&y<=new Date().getFullYear()+1);
   if(years.length){
     const minY=Math.min(...years), maxY=Math.max(...years);
-    const maxCount=Math.max(...Array.from({length:maxY-minY+1},(_,i)=>years.filter(y=>y===minY+i).length));
+    const counts = Array.from({length:maxY-minY+1},(_,i)=>years.filter(y=>y===minY+i).length);
+    const maxCount=Math.max(...counts,1);
     document.getElementById('timelineChart').innerHTML = Array.from({length:maxY-minY+1},(_,i)=>{
-      const y=minY+i, n=years.filter(x=>x===y).length;
+      const y=minY+i, n=counts[i];
       const h=maxCount?Math.round(n/maxCount*90):0;
-      return `<div class="timeline-col">
-        <div class="timeline-bar" style="height:${h}px" data-tip="${y}: ${n} lattine" title="${y}: ${n} lattine"></div>
-        <div class="timeline-year">${y}</div>
-      </div>`;
+      return `<div class="timeline-col"><div class="timeline-bar" style="height:${h}px" data-tip="${y}: ${n} lattine" title="${y}: ${n} lattine"></div><div class="timeline-year">${y}</div></div>`;
     }).join('');
   } else {
     document.getElementById('timelineChart').innerHTML = '<span style="color:var(--text3);font-size:13px">Nessun dato anno disponibile</span>';
@@ -926,25 +983,27 @@ function renderStats(){
 
 function openAdd(){
   editId=null; currentPhoto=null; currentPhotoChanged=false; currentRating=0;
+  resetImageSearchResults();
+  setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare candidate in automatico.');
   document.getElementById('modalTitle').textContent='Nuova Lattina';
   ['fBrand','fProduct','fVariant','fYear','fCountry','fVolume','fCond','fCat','fRarity','fValue','fSource','fCollectionType','fNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnDel').style.display='none';
   resetPhoto(); updateStars(0);
   document.getElementById('addModal').classList.add('open');
-  setTimeout(()=>document.getElementById('fBrand').focus(),100);
 }
-
 function openEdit(id){
   const c=cans.find(x=>x.id===id); if(!c) return;
   editId=id; currentPhoto=null; currentPhotoChanged=false; currentRating=c.rating||0;
+  resetImageSearchResults();
+  setImageSearchStatus('Puoi mantenere la foto attuale, sostituirla manualmente o cercarne una nuova.');
   document.getElementById('modalTitle').textContent='Modifica Lattina';
-  document.getElementById('fBrand').value=c.brand;
-  document.getElementById('fProduct').value=c.product || c.brand || '';
-  document.getElementById('fVariant').value=c.variant || c.model || '';
+  document.getElementById('fBrand').value=c.brand||'';
+  document.getElementById('fProduct').value=c.product||'';
+  document.getElementById('fVariant').value=c.variant||c.model||'';
   document.getElementById('fYear').value=c.year||'';
   document.getElementById('fCountry').value=c.country||'';
   document.getElementById('fVolume').value=c.volume||'';
-  document.getElementById('fCond').value=c.cond||'';
+  document.getElementById('fCond').value=c.condition||c.cond||'';
   document.getElementById('fCat').value=c.category||c.cat||'';
   document.getElementById('fRarity').value=c.rarity||'';
   document.getElementById('fValue').value=c.valueEstimate||c.value||'';
@@ -958,52 +1017,75 @@ function openEdit(id){
   } else resetPhoto();
   document.getElementById('addModal').classList.add('open');
 }
-
-function editFromDetail(){ closeDetail(); if(detailId) openEdit(detailId); }
 function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
-
-function resetPhoto(){
-  document.getElementById('photoDrop').innerHTML=`<div class="photo-drop-label"><div class="icon">📸</div><p>Clicca per caricare</p><span>JPG, PNG, WEBP</span></div>`;
-}
-
+function editFromDetail(){ closeDetail(); if(detailId) openEdit(detailId); }
+function resetPhoto(){ document.getElementById('photoDrop').innerHTML=`<div class="photo-drop-label"><div class="icon">📸</div><p>Clicca per caricare</p><span>JPG, PNG, WEBP</span></div>`; }
 function loadPhoto(input){
-  const file=input.files[0]; if(!file) return;
-  const img=new Image();
+  const file=input.files?.[0]; if(!file) return;
   const reader=new FileReader();
   reader.onload=e=>{
-    img.onload=()=>{
-      const canvas=document.createElement('canvas');
-      const max=800;
-      let w=img.width, h=img.height;
-      if(w>max||h>max){ if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
-      canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      currentPhoto=canvas.toDataURL('image/jpeg',0.82);
-      currentPhotoChanged=true;
-      document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
-    };
-    img.src=e.target.result;
+    currentPhoto=e.target.result;
+    currentPhotoChanged=true;
+    selectedImageResult = null;
+    document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active'));
+    document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+    setImageSearchStatus('Foto caricata manualmente.');
   };
   reader.readAsDataURL(file);
   input.value='';
 }
-
 function setRating(v){ currentRating=v; updateStars(v); }
-function updateStars(v){
-  document.querySelectorAll('#ratingStars .star').forEach((s,i)=>s.classList.toggle('active',i<v));
-  currentRating=v;
+function updateStars(v){ document.querySelectorAll('#ratingStars .star').forEach((s,i)=>s.classList.toggle('active',i<v)); currentRating=v; }
+function setImageSearchStatus(msg){ const el = document.getElementById('imageSearchStatus'); if(el) el.textContent = msg; }
+function resetImageSearchResults(){ imageSearchResults=[]; selectedImageResult=null; const wrap=document.getElementById('imageSearchResults'); if(wrap){ wrap.innerHTML=''; wrap.classList.remove('show'); } }
+function buildImageSearchQuery(){
+  const parts=[document.getElementById('fBrand').value.trim(),document.getElementById('fProduct').value.trim(),document.getElementById('fVariant').value.trim(),document.getElementById('fVolume').value.trim()?document.getElementById('fVolume').value.trim()+'ml':'',document.getElementById('fCountry').value.trim(),'lattina'].filter(Boolean);
+  return parts.join(' ');
+}
+function renderImageSearchResults(results){
+  imageSearchResults = results || []; selectedImageResult = null;
+  const wrap=document.getElementById('imageSearchResults'); if(!wrap) return;
+  if(!imageSearchResults.length){ wrap.innerHTML=''; wrap.classList.remove('show'); return; }
+  wrap.innerHTML = imageSearchResults.map((item, idx)=>`<button type="button" class="image-result" data-idx="${idx}"><div class="image-result-thumb">${item.thumb ? `<img src="${item.thumb}" alt="${item.title||'Risultato immagine'}">` : '🥫'}</div><div class="image-result-meta"><div class="image-result-title">${item.title||'Immagine trovata'}</div><div class="image-result-source">${item.source||'servizio immagini'}</div></div></button>`).join('');
+  wrap.classList.add('show');
+}
+function selectImageResult(index){
+  const item = imageSearchResults[index]; if(!item) return;
+  selectedImageResult=item; currentPhoto=item.full||item.thumb||null; currentPhotoChanged=true;
+  document.querySelectorAll('.image-result').forEach((el,i)=>el.classList.toggle('active', i===index));
+  if(currentPhoto){ document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`; setImageSearchStatus('Immagine selezionata. Verrà salvata insieme alla lattina.'); }
+}
+function clearSelectedImage(){ currentPhoto=null; currentPhotoChanged=true; selectedImageResult=null; document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active')); resetPhoto(); setImageSearchStatus('Foto rimossa. Puoi caricarne una nuova o cercarla di nuovo.'); }
+async function searchImagesWithProvider(query){
+  if(imageSearchConfig.enabled && imageSearchConfig.endpoint){
+    const res = await fetch(imageSearchConfig.endpoint, {method:'POST',headers:{'Content-Type':'application/json',...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})},body:JSON.stringify({query,provider:imageSearchConfig.provider})});
+    if(!res.ok) throw new Error('Servizio immagini non raggiungibile');
+    const data = await res.json();
+    return Array.isArray(data.results) ? data.results : [];
+  }
+  if(imageSearchConfig.mockResults){
+    return [1,2,3].map(i=>({id:`mock-${i}`,title:`${query} · risultato ${i}`,source:'demo locale',thumb:`https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=${300+i}&h=${300+i}&q=60&sig=${i}`,full:`https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&h=900&q=80&sig=${i}`}));
+  }
+  return [];
+}
+async function findCanImage(){
+  const query = buildImageSearchQuery();
+  if(!query){ toast('Compila almeno brand o prodotto','error'); return; }
+  const btn = document.getElementById('findImageBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Cerco...'; }
+  setImageSearchStatus(`Ricerca immagine per: ${query}`);
+  try { renderImageSearchResults(await searchImagesWithProvider(query)); }
+  catch(e){ setImageSearchStatus('Errore nella ricerca immagine.'); toast('Ricerca immagine non riuscita','error'); }
+  finally { if(btn){ btn.disabled=false; btn.textContent='Trova immagine'; } }
 }
 
-async function saveCan(){
-  const brand=document.getElementById('fBrand').value.trim();
-  const product=document.getElementById('fProduct').value.trim();
-  const variant=document.getElementById('fVariant').value.trim();
-  if(!brand||!product||!variant){ toast('Brand, prodotto e variante sono obbligatori','error'); return; }
-  const btnSave = document.querySelector('.modal-footer .btn-primary');
-  btnSave.textContent='Salvataggio...'; btnSave.disabled=true;
-  const oldPhotoUrl = editId ? (cans.find(x=>x.id===editId)?.photoUrl||null) : null;
-  const canData = {
-    brand, product, variant, model: variant,
+function collectFormData(){
+  return normalizeCan({
+    id: editId || safeId(),
+    brand: document.getElementById('fBrand').value.trim(),
+    product: document.getElementById('fProduct').value.trim(),
+    variant: document.getElementById('fVariant').value.trim(),
+    model: document.getElementById('fVariant').value.trim(),
     year: document.getElementById('fYear').value.trim(),
     country: document.getElementById('fCountry').value.trim(),
     volume: document.getElementById('fVolume').value.trim(),
@@ -1016,141 +1098,144 @@ async function saveCan(){
     value: document.getElementById('fValue').value.trim(),
     source: document.getElementById('fSource').value.trim(),
     collectionType: document.getElementById('fCollectionType').value,
-    collection_type: document.getElementById('fCollectionType').value,
-    notes: document.getElementById('fNotes').value.trim(),
     rating: currentRating,
-    photoUrl: oldPhotoUrl
-  };
-  try {
-    await saveCanToFirebase(canData, currentPhotoChanged ? currentPhoto : null, oldPhotoUrl);
-    closeModal();
-  } catch(e){ toast('Errore salvataggio: '+e.message,'error'); }
-  btnSave.textContent='Salva'; btnSave.disabled=false;
+    notes: document.getElementById('fNotes').value.trim(),
+    photoUrl: currentPhotoChanged ? currentPhoto : ((editId && cans.find(x=>x.id===editId)?.photoUrl) || null),
+    addedAt: editId ? (cans.find(x=>x.id===editId)?.addedAt || Date.now()) : Date.now()
+  });
 }
-
-async function deleteCan(){
-  if(!editId||!confirm('Eliminare questa lattina dalla collezione?')) return;
-  try {
-    await deleteCanFromFirebase(editId);
-    closeModal(); toast('Lattina eliminata','error');
-  } catch(e){ toast('Errore eliminazione','error'); }
+async function saveCan(){
+  const data = collectFormData();
+  if(!data.brand || !data.product || !data.variant){ toast('Brand, prodotto e variante sono obbligatori','error'); return; }
+  if(editId){ cans = cans.map(c=>c.id===editId ? data : c); toast('Lattina aggiornata ✓'); }
+  else { cans.unshift(data); toast('Lattina aggiunta ✓'); }
+  saveLocal();
+  renderBrandNav();
+  closeModal();
+  render();
 }
-
-async function confirmDelete(id){
-  const c=cans.find(x=>x.id===id); if(!c) return;
-  if(!confirm(`Eliminare "${displayName(c)}"?`)) return;
-  try {
-    await deleteCanFromFirebase(id);
-    toast('Lattina eliminata','error');
-  } catch(e){ toast('Errore eliminazione','error'); }
-}
-
+function confirmDelete(id){ if(confirm('Eliminare questa lattina?')) deleteCan(id); }
+function deleteCan(id=editId){ if(!id) return; cans = cans.filter(c=>c.id!==id); saveLocal(); editId=null; closeModal(); closeDetail(); renderBrandNav(); render(); toast('Lattina eliminata'); }
 function openDetail(id){
-  detailId=id; const c=cans.find(x=>x.id===id); if(!c) return;
-  const hero=document.getElementById('dHero');
-  const title = displayName(c);
-  if(c.photoUrl){
-    hero.innerHTML=`<img class="detail-hero-img" src="${c.photoUrl}" alt="${title}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${title}</div></div>`;
-  } else {
-    hero.innerHTML=`<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${title}</div></div>`;
-  }
-  const items=[
-    ['Prodotto',c.product||'—',''],['Variante',c.variant||c.model||'—',''],['Anno',c.year||'—','accent'],
-    ['Paese',c.country||'—',''],['Volume',c.volume?c.volume+'ml':'—',''],['Condizioni',c.condition||c.cond||'—',''],
-    ['Categoria',c.category||c.cat||'—',''],['Rarità',c.rarity||'—',''],['Tipo',c.collectionType||'—',''],
-    ['Valore',(c.valueEstimate||c.value)?('€'+(c.valueEstimate||c.value)):'—','accent']
-  ];
-  document.getElementById('dGrid').innerHTML=items.map(([k,v,cls])=>`<div class="detail-item"><div class="detail-item-key">${k}</div><div class="detail-item-val ${cls}">${v}</div></div>`).join('');
-  document.getElementById('dNoteWrap').innerHTML = c.notes
-    ? `<div class="detail-note">${c.notes}</div>`
-    : `<div class="detail-note detail-note-empty">Nessuna nota</div>`;
-  const tags=[c.source, c.rarity, c.collectionType, c.country].filter(Boolean);
-  const starStr = c.rating ? `<div class="detail-tag"><div class="stars-display" style="display:inline-flex">${starsHtml(c.rating)}</div></div>` : '';
-  document.getElementById('dTags').innerHTML = starStr + tags.map(t=>`<span class="detail-tag">${t}</span>`).join('');
+  const c=cans.find(x=>x.id===id); if(!c) return; detailId=id;
+  const title=displayName(c);
+  document.getElementById('dHero').innerHTML = c.photoUrl ? `<img class="detail-hero-img" src="${c.photoUrl}" alt="${title}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand||''}</div><div class="detail-hero-name">${title}</div></div>` : `<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand||''}</div><div class="detail-hero-name">${title}</div></div>`;
+  document.getElementById('dGrid').innerHTML = [
+    ['Anno', c.year||'—', 'accent'], ['Paese', c.country||'—', ''], ['Volume', c.volume ? c.volume+' ml' : '—', ''],
+    ['Condizione', c.condition||c.cond||'—', ''], ['Categoria', c.category||c.cat||'—', ''], ['Rarità', c.rarity||'—', ''],
+    ['Tipo', c.collectionType||'—', ''], ['Valore',(c.valueEstimate||c.value)?('€'+(c.valueEstimate||c.value)):'—','accent'], ['Rating', c.rating ? starsHtml(c.rating) : '—', '']
+  ].map(([k,v,cls])=>`<div class="detail-item"><div class="detail-item-key">${k}</div><div class="detail-item-val ${cls}">${v}</div></div>`).join('');
+  document.getElementById('dNoteWrap').innerHTML = `<div class="detail-note ${c.notes?'':'detail-note-empty'}">${c.notes || 'Nessuna nota disponibile.'}</div>`;
+  document.getElementById('dTags').innerHTML = [c.brand,c.product,c.variant,c.country,c.category||c.cat,c.rarity,c.collectionType].filter(Boolean).map(t=>`<span class="detail-tag">${t}</span>`).join('');
   document.getElementById('detailModal').classList.add('open');
 }
-
 function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
-
-function exportJSON(){
-  const exportData = { metadata: { exportedAt: Date.now(), count: cans.length, app: 'myCansPRO' }, lattine: cans.map(c=>({...normalizeCan(c), photo:undefined})) };
-  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='mycanspro-collezione.json'; a.click();
-  toast('Esportazione completata');
+function exportJSON(){ const blob=new Blob([JSON.stringify(cans,null,2)],{type:'application/json'}); downloadBlob(blob,'mycanspro-collection.json'); }
+function exportCSV(){ const headers=['Brand','Prodotto','Variante','Anno','Paese','Volume','Condizione','Categoria','Rarità','Tipo','Valore','Provenienza','Note','Rating']; const rows=cans.map(c=>[c.brand,c.product,c.variant,c.year,c.country,c.volume,c.condition||c.cond,c.category||c.cat,c.rarity,c.collectionType,c.valueEstimate||c.value,c.source,c.notes,c.rating].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')); const blob=new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8;'}); downloadBlob(blob,'mycanspro-collection.csv'); }
+function downloadBlob(blob, filename){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+function flattenImportedData(data){
+  if(Array.isArray(data)) return data;
+  if(!data || typeof data !== 'object') return [];
+  const directKeys = ['cans','items','collection','lattine','data','records'];
+  for(const key of directKeys){
+    if(Array.isArray(data[key])) return data[key];
+  }
+  if(data.brands && typeof data.brands === 'object'){
+    const out = [];
+    Object.entries(data.brands).forEach(([brandName, value])=>{
+      const arr = Array.isArray(value) ? value : (Array.isArray(value?.items) ? value.items : Array.isArray(value?.cans) ? value.cans : []);
+      arr.forEach(item=>out.push({...item, brand: item.brand || brandName}));
+    });
+    if(out.length) return out;
+  }
+  if(data.byBrand && typeof data.byBrand === 'object'){
+    const out = [];
+    Object.entries(data.byBrand).forEach(([brandName, arr])=>{
+      (Array.isArray(arr) ? arr : []).forEach(item=>out.push({...item, brand: item.brand || brandName}));
+    });
+    if(out.length) return out;
+  }
+  return [];
 }
 
-function exportCSV(){
-  const headers=['Brand','Prodotto','Variante','Anno','Paese','Volume','Condizioni','Categoria','Rarità','Tipo collezione','Valore','Provenienza','Note','Valutazione'];
-  const rows=cans.map(c=>[c.brand,c.product,c.variant,c.year,c.country,c.volume,c.condition||c.cond,c.category||c.cat,c.rarity,c.collectionType,c.valueEstimate||c.value,c.source,c.notes,c.rating].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`));
-  const csv=[headers.map(h=>`"${h}"`).join(','),...rows.map(r=>r.join(','))].join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='mycanspro-collezione.csv'; a.click();
-  toast('CSV esportato');
-}
-
-async function importJSON(input){
-  const file=input.files[0]; if(!file) return;
-  const r=new FileReader();
-  r.onload=async e=>{
-    try{
-      const parsed=JSON.parse(e.target.result);
-      const data = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.lattine) ? parsed.lattine : null);
-      if(!Array.isArray(data)) throw new Error();
-      const existing=new Set(cans.map(c=>c.id));
-      let count=0;
-      for(const c of data){
-        if(!existing.has(c.id)){
-          const {id,...rest}=c;
-          await addDoc(collection(db, COLL), {...normalizeCan(rest), addedAt: rest.addedAt||Date.now()});
-          count++;
-        }
+function importJSON(input){
+  const file=input.files?.[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try {
+      const data=JSON.parse(e.target.result);
+      const incoming = flattenImportedData(data).map(normalizeCan).filter(c => c.brand || c.product || c.variant || c.model);
+      if(!incoming.length){
+        toast('Nessuna lattina trovata nel JSON','error');
+        return;
       }
-      await loadCans();
-      toast(`Importate ${count} nuove lattine`);
-    } catch(err){ toast('File JSON non valido','error'); }
+      const merged = [...incoming, ...cans];
+      const seen = new Set();
+      cans = merged.filter(c => {
+        const key = [String(c.id || '').trim(), String(c.brand || '').trim().toLowerCase(), String(c.product || '').trim().toLowerCase(), String(c.variant || c.model || '').trim().toLowerCase(), String(c.year || '').trim(), String(c.country || '').trim().toLowerCase()].join('||');
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      saveLocal();
+      renderBrandNav();
+      render();
+      if(currentPage==='stats') renderStats();
+      toast(`Import completato ✓ (${incoming.length} elementi)`);
+    } catch(err){
+      console.error('Import JSON error:', err);
+      toast('JSON non valido o schema non supportato','error');
+    }
   };
-  r.readAsText(file);
+  reader.readAsText(file);
   input.value='';
 }
+function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione?')){ cans=[]; saveLocal(); renderBrandNav(); render(); toast('Collezione cancellata'); } }
 
-async function clearAll(){
-  if(!confirm('Cancellare TUTTA la collezione? Questa azione è irreversibile.')) return;
-  showLoading(true);
-  for(const c of cans){
-    if(c.photoUrl) try{ await deleteObject(ref(storage, c.photoUrl)); }catch(e){}
-    await deleteDoc(doc(db, COLL, c.id));
-  }
-  cans=[]; activeBrand='all'; renderBrandNav(); render();
-  showLoading(false);
-  toast('Collezione cancellata','error');
+function bindEvents(){
+  document.getElementById('searchInput')?.addEventListener('input', render);
+  document.getElementById('sortSel')?.addEventListener('change', render);
+  document.getElementById('gridBtn')?.addEventListener('click', ()=>setView('grid'));
+  document.getElementById('listBtn')?.addEventListener('click', ()=>setView('list'));
+  document.getElementById('menuBtn')?.addEventListener('click', ()=>toggleSidebar());
+  document.getElementById('sidebarOverlay')?.addEventListener('click', ()=>toggleSidebar(false));
+  document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.addEventListener('click', e=>{ e.preventDefault(); showView(el.dataset.view, el); }));
+  document.querySelectorAll('.bnav-item[data-view]').forEach(el=>el.addEventListener('click', ()=>showView(el.dataset.view)));
+  document.getElementById('findImageBtn')?.addEventListener('click', findCanImage);
+  document.getElementById('clearImageBtn')?.addEventListener('click', clearSelectedImage);
+  document.getElementById('photoDrop')?.addEventListener('click', ()=>document.getElementById('photoFile')?.click());
+  document.getElementById('photoFile')?.addEventListener('change', e=>loadPhoto(e.target));
+  document.getElementById('importFile')?.addEventListener('change', e=>importJSON(e.target));
+  document.getElementById('grid')?.addEventListener('click', e=>{
+    const editBtn = e.target.closest('[data-edit-id]');
+    if(editBtn){ e.stopPropagation(); openEdit(editBtn.dataset.editId); return; }
+    const deleteBtn = e.target.closest('[data-delete-id]');
+    if(deleteBtn){ e.stopPropagation(); confirmDelete(deleteBtn.dataset.deleteId); return; }
+    const card = e.target.closest('[data-open-detail]');
+    if(card) openDetail(card.dataset.openDetail);
+  });
+  document.getElementById('imageSearchResults')?.addEventListener('click', e=>{
+    const btn = e.target.closest('.image-result');
+    if(!btn) return;
+    selectImageResult(Number(btn.dataset.idx));
+  });
+  document.getElementById('addModal')?.addEventListener('click', e=>{ if(e.target.id==='addModal') closeModal(); });
+  document.getElementById('detailModal')?.addEventListener('click', e=>{ if(e.target.id==='detailModal') closeDetail(); });
+  window.addEventListener('resize', updateMobileLayout);
+  window.addEventListener('orientationchange', updateMobileLayout);
 }
 
-// Keyboard shortcuts
-document.addEventListener('keydown',e=>{
-  if((e.key==='Escape')){closeModal();closeDetail();}
-  if(e.key==='n'&&!e.target.matches('input,textarea,select')) openAdd();
+window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  bindEvents();
+  loadCans();
+  showView('collection', document.querySelector('.nav-item[data-view="collection"]'));
+  updateMobileLayout();
 });
-
-// Close modals on backdrop click
-document.getElementById('addModal').addEventListener('click',e=>{if(e.target===document.getElementById('addModal'))closeModal();});
-document.getElementById('detailModal').addEventListener('click',e=>{if(e.target===document.getElementById('detailModal'))closeDetail();});
-
-// Search
-document.getElementById('searchInput').addEventListener('input',render);
-
-// Expose functions to global scope (needed for onclick in HTML)
-window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail;
-window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail;
-window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete;
-window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar;
-window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating;
-window.loadPhoto=loadPhoto; window.exportJSON=exportJSON; window.exportCSV=exportCSV;
-window.importJSON=importJSON; window.clearAll=clearAll;
-
-// Init — carica da Firebase
-loadCans();
+})();
 </script>
+
 </body>
 </html>

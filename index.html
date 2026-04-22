@@ -547,7 +547,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
             Rimuovi foto
           </button>
         </div>
-        <div class="image-search-status" id="imageSearchStatus">Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online con Google o Bing.</div>
+        <div class="image-search-status" id="imageSearchStatus">Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online.</div>
         <div class="image-search-results" id="imageSearchResults"></div>
       </div>
       <div class="field-row3">
@@ -695,11 +695,12 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 const STORAGE_KEY = 'mycanspro_collection_v2';
 const imageSearchConfig = {
   enabled: true,
-  provider: 'opensource',
+  provider: 'wikimedia-commons',
   endpoint: '',
   apiKey: '',
-  maxResults: 12
+  mockResults: false
 };
+
 let cans = [];
 let currentPhoto = null, currentPhotoChanged = false;
 let editId = null, detailId = null, currentRating = 0;
@@ -983,7 +984,7 @@ function renderStats(){
 function openAdd(){
   editId=null; currentPhoto=null; currentPhotoChanged=false; currentRating=0;
   resetImageSearchResults();
-  setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online con Google o Bing.');
+  setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online.');
   document.getElementById('modalTitle').textContent='Nuova Lattina';
   ['fBrand','fProduct','fVariant','fYear','fCountry','fVolume','fCond','fCat','fRarity','fValue','fSource','fCollectionType','fNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnDel').style.display='none';
@@ -1227,186 +1228,53 @@ function selectImageResult(index){
   if(currentPhoto){ document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`; setImageSearchStatus(`Immagine selezionata${item.source ? ' da ' + item.source : ''}. Verrà salvata insieme alla lattina.`); }
 }
 function clearSelectedImage(){ currentPhoto=null; currentPhotoChanged=true; selectedImageResult=null; document.querySelectorAll('.image-result').forEach(el=>el.classList.remove('active')); resetPhoto(); setImageSearchStatus('Foto rimossa. Puoi caricarne una nuova o cercarla di nuovo.'); }
-function getProviderLabel(provider){
-  const p = provider || imageSearchConfig.provider;
-  if(p === 'opensource') return 'Openverse + Wikimedia Commons';
-  return p || 'provider';
-}
-function normalizeProviderResult(item){
-  return {
-    id: item.id || item.full || item.thumb || item.pageUrl || String(Math.random()),
-    title: item.title || 'Immagine',
-    source: item.source || 'servizio immagini',
-    thumb: item.thumb || item.thumbnail || item.full || '',
-    full: item.full || item.url || item.thumb || '',
-    pageUrl: item.pageUrl || item.contextUrl || item.hostPageUrl || ''
-  };
-}
-async function searchBingImages(query, ctx){
-  const key = imageSearchConfig.bingApiKey || imageSearchConfig.apiKey;
-  if(!key) throw new Error('Configura bingApiKey per usare Bing Image Search');
-  const terms = buildStrictSearchTerms(ctx || buildImageSearchContext());
-  const out = [];
-  const seen = new Set();
-  for(const term of terms.slice(0,6)){
-    if(out.length >= 18) break;
-    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${encodeURIComponent(term)}&count=10&mkt=${encodeURIComponent(imageSearchConfig.market || 'it-IT')}&safeSearch=${encodeURIComponent(imageSearchConfig.safeSearch || 'Moderate')}&imageType=Photo`;
-    const res = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': key } });
-    if(!res.ok){
-      if(res.status === 401 || res.status === 403) throw new Error('Chiave Bing non valida o non autorizzata');
-      continue;
-    }
-    const data = await res.json();
-    const items = Array.isArray(data && data.value) ? data.value : [];
-    for(const item of items){
-      const normalized = normalizeProviderResult({
-        id: item.imageId || item.webSearchUrl || item.contentUrl,
-        title: item.name || item.hostPageDisplayUrl || 'Immagine',
-        source: 'Bing Images',
-        thumb: item.thumbnailUrl || item.contentUrl,
-        full: item.contentUrl || item.thumbnailUrl,
-        pageUrl: item.hostPageUrl || item.webSearchUrl || ''
-      });
-      const dedupeKey = normalized.full || normalized.thumb || normalized.pageUrl || normalized.id;
-      if(!normalized.thumb || !normalized.full || seen.has(dedupeKey)) continue;
-      seen.add(dedupeKey);
-      out.push(normalized);
-      if(out.length >= 18) break;
-    }
-  }
-  return out;
-}
-async function searchGoogleImages(query, ctx){
-  const key = imageSearchConfig.googleApiKey || imageSearchConfig.apiKey;
-  const cx = imageSearchConfig.googleCx;
-  if(!key) throw new Error('Configura googleApiKey per usare Google');
-  if(!cx) throw new Error('Configura googleCx per usare Google Programmable Search');
-  const terms = buildStrictSearchTerms(ctx || buildImageSearchContext());
-  const out = [];
-  const seen = new Set();
-  for(const term of terms.slice(0,6)){
-    if(out.length >= 18) break;
-    const url = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(key)}&cx=${encodeURIComponent(cx)}&searchType=image&safe=active&imgType=photo&num=10&hl=it&q=${encodeURIComponent(term)}`;
-    const res = await fetch(url);
-    if(!res.ok){
-      if(res.status === 401 || res.status === 403) throw new Error('Chiave Google non valida o non autorizzata');
-      continue;
-    }
-    const data = await res.json();
-    const items = Array.isArray(data && data.items) ? data.items : [];
-    for(const item of items){
-      const image = item.image || {};
-      const normalized = normalizeProviderResult({
-        id: item.cacheId || item.link || item.image?.contextLink,
-        title: item.title || item.snippet || 'Immagine',
-        source: 'Google Images',
-        thumb: image.thumbnailLink || item.link,
-        full: item.link || image.thumbnailLink,
-        pageUrl: image.contextLink || item.displayLink || ''
-      });
-      const dedupeKey = normalized.full || normalized.thumb || normalized.pageUrl || normalized.id;
-      if(!normalized.thumb || !normalized.full || seen.has(dedupeKey)) continue;
-      seen.add(dedupeKey);
-      out.push(normalized);
-      if(out.length >= 18) break;
-    }
-  }
-  return out;
-}
 async function searchImagesWithProvider(query, ctx){
   if(imageSearchConfig.enabled && imageSearchConfig.endpoint){
-    const res = await fetch(imageSearchConfig.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})
-      },
-      body: JSON.stringify({
-        query,
-        context: ctx,
-        provider: imageSearchConfig.provider
-      })
-    });
-
+    const res = await fetch(imageSearchConfig.endpoint, {method:'POST',headers:{'Content-Type':'application/json',...(imageSearchConfig.apiKey ? {'Authorization': `Bearer ${imageSearchConfig.apiKey}`} : {})},body:JSON.stringify({query,context:ctx,provider:imageSearchConfig.provider})});
     if(!res.ok) throw new Error('Servizio immagini non raggiungibile');
-
     const data = await res.json();
     return Array.isArray(data.results) ? data.results : [];
   }
-
   const [wikimediaResults, openverseResults] = await Promise.allSettled([
     searchWikimediaCommons(query, ctx),
     searchOpenverse(query, ctx)
   ]);
-
   const combined = [];
-
-  if(wikimediaResults.status === 'fulfilled') {
-    combined.push(...wikimediaResults.value);
-  }
-
-  if(openverseResults.status === 'fulfilled') {
-    combined.push(...openverseResults.value);
-  }
-
+  if(wikimediaResults.status === 'fulfilled') combined.push(...wikimediaResults.value);
+  if(openverseResults.status === 'fulfilled') combined.push(...openverseResults.value);
   const dedupe = new Map();
-
   combined.forEach(item => {
     const key = item.full || item.thumb || item.pageUrl || item.id;
     if(key && !dedupe.has(key)) dedupe.set(key, item);
   });
-
   return [...dedupe.values()]
-    .map(item => ({ ...item, score: scoreImageResult(item, ctx) }))
+    .map(item => ({...item, score: scoreImageResult(item, ctx)}))
     .filter(item => item.score >= 10)
-    .sort((a, b) => (b.score || 0) - (a.score || 0))
-    .slice(0, imageSearchConfig.maxResults || 12);
+    .sort((a,b)=> (b.score||0) - (a.score||0))
+    .slice(0,12);
 }
 async function findCanImage(){
   const ctx = buildImageSearchContext();
   const query = ctx.baseQuery;
-
-  if(!query){
-    toast('Compila almeno brand o prodotto','error');
-    return;
-  }
-
+  if(!query){ toast('Compila almeno brand o prodotto','error'); return; }
   const btn = document.getElementById('findImageBtn');
-  if(btn){
-    btn.disabled = true;
-    btn.textContent = 'Cerco...';
-  }
-
+  if(btn){ btn.disabled = true; btn.textContent = 'Cerco...'; }
   const terms = buildStrictSearchTerms(ctx);
-  setImageSearchStatus(`Ricerca avanzata con ${getProviderLabel()}: ${query}. Query provate: ${terms.slice(0,3).join(' · ')}`);
-
+  setImageSearchStatus(`Ricerca avanzata online per: ${query}. Query provate: ${terms.slice(0,3).join(' · ')}`);
   try {
     const results = await searchImagesWithProvider(query, ctx);
     renderImageSearchResults(results);
-
     if(results.length){
       const top = results[0];
-      setImageSearchStatus(`Trovate ${results.length} immagini compatibili da ${getProviderLabel()}. Migliore risultato: ${top.title || 'immagine'}${top.source ? ' · ' + top.source : ''}.`);
+      setImageSearchStatus(`Trovate ${results.length} immagini compatibili. Migliore risultato: ${top.title || 'immagine'}${top.source ? ' · ' + top.source : ''}.`);
     } else {
-      setImageSearchStatus(`Nessun risultato abbastanza coerente con ${getProviderLabel()} per: ${query}. Prova a semplificare la variante o ad aggiungere il volume.`);
+      setImageSearchStatus(`Nessun risultato abbastanza coerente per: ${query}. Prova a semplificare la variante, aggiungere il volume o cambiare categoria.`);
       toast('Nessuna immagine precisa trovata','error');
     }
   }
   catch(e){
     console.error(e);
     setImageSearchStatus('Errore nella ricerca immagine online.');
-    toast('Ricerca immagine non riuscita','error');
-  }
-  finally {
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = 'Trova immagine';
-    }
-  }
-}
-  catch(e){
-    console.error(e);
-    setImageSearchStatus(e && e.message ? e.message : 'Errore nella ricerca immagine online.');
     toast('Ricerca immagine non riuscita','error');
   }
   finally { if(btn){ btn.disabled=false; btn.textContent='Trova immagine'; } }
@@ -1503,11 +1371,6 @@ function bindEvents(){
   window.addEventListener('orientationchange', updateMobileLayout);
 }
 
-// Configura qui il provider immagini:
-// imageSearchConfig.provider = 'bing' oppure 'google'
-// imageSearchConfig.bingApiKey = 'LA_TUA_CHIAVE_BING'
-// imageSearchConfig.googleApiKey = 'LA_TUA_CHIAVE_GOOGLE'
-// imageSearchConfig.googleCx = 'IL_TUO_GOOGLE_CX'
 window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
 
 document.addEventListener('DOMContentLoaded', ()=>{

@@ -355,19 +355,22 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .topbar-brand{display:none}
 }
 /* BOTTOM NAV MOBILE */
-.bottom-nav{display:none;position:fixed;top:var(--mobile-topbar-height);left:0;right:0;bottom:auto;background:rgba(22,22,24,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);z-index:85;padding:4px 8px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:none}
+.bottom-nav{display:none;position:fixed;top:var(--mobile-topbar-height);left:0;right:0;bottom:auto;background:rgba(22,22,24,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);z-index:85;padding:4px 8px;box-shadow:0 12px 30px rgba(0,0,0,.22)}
 .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;padding:8px 0;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:transparent;transition:color .15s}
 .bnav-item.active{color:var(--accent)}
 .bnav-item svg{transition:transform .15s}
 .bnav-item.active svg{transform:scale(1.1)}
 
+
+button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.image-result,.star{pointer-events:auto;touch-action:manipulation}
+.main,.content,.topbar,.sidebar,.modal-bg,.detail-modal,.modal,.bottom-nav{pointer-events:auto}
 /* ANIMATIONS */
 .card{animation:fadeIn .25s ease both}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar-el">
@@ -380,16 +383,16 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   <nav class="nav">
     <div class="nav-section">
       <div class="nav-label">Viste</div>
-      <a class="nav-item active" data-view="collection" onclick="showView('collection'); return false;" href="#">
+      <a class="nav-item active" data-view="collection" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
         <span>Collezione</span>
         <span class="count" id="navTotal">0</span>
       </a>
-      <a class="nav-item" data-view="stats" onclick="showView('stats'); return false;" href="#">
+      <a class="nav-item" data-view="stats" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
         <span>Statistiche</span>
       </a>
-      <a class="nav-item" data-view="io" onclick="showView('io'); return false;" href="#">
+      <a class="nav-item" data-view="io" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10a1 1 0 011 1v0a1 1 0 01-1 1H3a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>
         <span>Import / Export</span>
       </a>
@@ -419,18 +422,18 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <input type="text" id="searchInput" placeholder="Cerca brand, prodotto, variante, paese...">
     </div>
     <div class="topbar-actions" id="topbarActions">
-      <button class="btn btn-ghost btn-menu" id="menuBtn" onclick="toggleSidebar()" title="Menu" style="padding:8px 10px">
+      <button class="btn btn-ghost btn-menu" id="menuBtn" title="Menu" style="padding:8px 10px" type="button">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
       </button>
       <div class="view-toggle">
-        <button class="view-btn active" id="gridBtn" onclick="setView('grid')" title="Griglia">
+        <button class="view-btn active" id="gridBtn" title="Griglia" type="button">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
         </button>
-        <button class="view-btn" id="listBtn" onclick="setView('list')" title="Lista">
+        <button class="view-btn" id="listBtn" title="Lista" type="button">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h10"/></svg>
         </button>
       </div>
-      <select class="sort-select" id="sortSel" onchange="render()">
+      <select class="sort-select" id="sortSel">
         <option value="newest">Aggiunta recente</option>
         <option value="name">Nome A-Z</option>
         <option value="brand">Brand A-Z</option>
@@ -438,7 +441,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
         <option value="year-asc">Anno ↑</option>
         <option value="rating">Valutazione</option>
       </select>
-      <button class="btn btn-primary" onclick="openAdd()">
+      <button class="btn btn-primary" id="topAddBtn" type="button">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M2 8h12"/></svg>
         Aggiungi
       </button>
@@ -455,7 +458,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <div class="empty-icon">🥫</div>
       <h3>Nessuna lattina trovata</h3>
       <p>Inizia ad aggiungere la tua collezione oppure modifica i filtri di ricerca</p>
-      <button class="btn btn-primary" onclick="openAdd()">Aggiungi la prima</button>
+      <button class="btn btn-primary" id="topAddBtn" type="button">Aggiungi la prima</button>
     </div>
   </div>
 
@@ -489,11 +492,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <h3>Esporta Collezione</h3>
       <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Scarica tutti i dati della collezione in formato JSON.</p>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" onclick="exportJSON()">
+        <button class="btn btn-ghost" id="exportJsonBtn" type="button">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
           Esporta JSON
         </button>
-        <button class="btn btn-ghost" onclick="exportCSV()">
+        <button class="btn btn-ghost" id="exportCsvBtn" type="button">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
           Esporta CSV
         </button>
@@ -502,8 +505,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     <div class="io-section">
       <h3>Importa Collezione</h3>
       <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Importa un file JSON precedentemente esportato. I dati esistenti verranno mantenuti.</p>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
-      <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">
+      <input type="file" id="importFile" accept=".json" style="display:none">
+      <button class="btn btn-ghost" id="importJsonBtn" type="button">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14V6M5 9l3-3 3 3M3 4h10"/></svg>
         Importa JSON
       </button>
@@ -511,7 +514,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     <div class="io-section">
       <h3>Dati</h3>
       <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Cancella definitivamente tutta la collezione. Azione irreversibile.</p>
-      <button class="btn btn-danger" onclick="clearAll()">
+      <button class="btn btn-danger" id="clearAllBtn" type="button">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
         Cancella tutto
       </button>
@@ -524,25 +527,25 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   <div class="modal">
     <div class="modal-header">
       <h2 id="modalTitle">Nuova Lattina</h2>
-      <button class="modal-close" onclick="closeModal()">×</button>
+      <button class="modal-close" id="closeAddModalBtn" type="button">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
         <label>Foto</label>
-        <div class="photo-drop" id="photoDrop" onclick="document.getElementById('photoFile').click()">
+        <div class="photo-drop" id="photoDrop">
           <div class="photo-drop-label">
             <div class="icon">📸</div>
             <p>Clicca per caricare</p>
             <span>JPG, PNG, WEBP</span>
           </div>
         </div>
-        <input type="file" id="photoFile" accept="image/*" style="display:none" onchange="loadPhoto(this)">
+        <input type="file" id="photoFile" accept="image/*" style="display:none">
         <div class="photo-actions">
-          <button type="button" class="btn btn-ghost" id="findImageBtn" onclick="findCanImage()">
+          <button type="button" class="btn btn-ghost" id="findImageBtn">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
             Trova immagine
           </button>
-          <button type="button" class="btn btn-ghost" id="clearImageBtn" onclick="clearSelectedImage()">
+          <button type="button" class="btn btn-ghost" id="clearImageBtn">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg>
             Rimuovi foto
           </button>
@@ -624,19 +627,19 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <div class="field">
         <label>Valutazione personale</label>
         <div class="rating-stars" id="ratingStars">
-          <span class="star" data-v="1" onclick="setRating(1)">★</span>
-          <span class="star" data-v="2" onclick="setRating(2)">★</span>
-          <span class="star" data-v="3" onclick="setRating(3)">★</span>
-          <span class="star" data-v="4" onclick="setRating(4)">★</span>
-          <span class="star" data-v="5" onclick="setRating(5)">★</span>
+          <span class="star" data-v="1">★</span>
+          <span class="star" data-v="2">★</span>
+          <span class="star" data-v="3">★</span>
+          <span class="star" data-v="4">★</span>
+          <span class="star" data-v="5">★</span>
         </div>
       </div>
       <div class="field"><label>Note</label><textarea id="fNotes" placeholder="Provenienza, storia, curiosità, dettagli particolari..."></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" id="btnDel" style="display:none;margin-right:auto" onclick="deleteCan()">Elimina</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Annulla</button>
-      <button class="btn btn-primary" onclick="saveCan()">Salva</button>
+      <button class="btn btn-danger btn-sm" id="btnDel" style="display:none;margin-right:auto" type="button">Elimina</button>
+      <button class="btn btn-ghost" id="cancelModalBtn" type="button">Annulla</button>
+      <button class="btn btn-primary" id="saveCanBtn" type="button">Salva</button>
     </div>
   </div>
 </div>
@@ -650,11 +653,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <div id="dNoteWrap"></div>
       <div class="detail-tags" id="dTags"></div>
       <div class="detail-footer">
-        <button class="btn btn-ghost btn-sm" onclick="editFromDetail()">
+        <button class="btn btn-ghost btn-sm" id="editFromDetailBtn" type="button">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
           Modifica
         </button>
-        <button class="btn btn-ghost btn-sm" onclick="closeDetail()">Chiudi</button>
+        <button class="btn btn-ghost btn-sm" id="closeDetailBtn" type="button">Chiudi</button>
       </div>
     </div>
   </div>
@@ -662,23 +665,23 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bottom-nav">
-  <button class="bnav-item active" id="bn-collection" data-view="collection" onclick="showView('collection');closeSidebarMobile()">
+  <button class="bnav-item active" id="bn-collection" data-view="collection" type="button">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
     Collezione
   </button>
-  <button class="bnav-item" id="bn-stats" data-view="stats" onclick="showView('stats');closeSidebarMobile()">
+  <button class="bnav-item" id="bn-stats" data-view="stats" type="button">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
     Statistiche
   </button>
-  <button class="bnav-item" onclick="openAdd()" style="color:var(--accent)">
+  <button class="bnav-item" id="mobileAddBtn" style="color:var(--accent)" type="button">
     <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 4v8M4 8h8"/></svg>
     Aggiungi
   </button>
-  <button class="bnav-item" id="bn-io" data-view="io" onclick="showView('io');closeSidebarMobile()">
+  <button class="bnav-item" id="bn-io" data-view="io" type="button">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
     Export
   </button>
-  <button class="bnav-item" onclick="toggleSidebar()">
+  <button class="bnav-item" id="mobileBrandBtn" type="button">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
     Brand
   </button>
@@ -1341,32 +1344,48 @@ function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione?')){ cans=[
 function bindEvents(){
   document.getElementById('searchInput')?.addEventListener('input', render);
   document.getElementById('sortSel')?.addEventListener('change', render);
-  document.getElementById('gridBtn')?.addEventListener('click', ()=>setView('grid'));
-  document.getElementById('listBtn')?.addEventListener('click', ()=>setView('list'));
-  document.getElementById('menuBtn')?.addEventListener('click', ()=>toggleSidebar());
-  document.getElementById('sidebarOverlay')?.addEventListener('click', ()=>toggleSidebar(false));
-  document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.addEventListener('click', e=>{ e.preventDefault(); showView(el.dataset.view, el); }));
-  document.querySelectorAll('.bnav-item[data-view]').forEach(el=>el.addEventListener('click', ()=>showView(el.dataset.view)));
-  document.getElementById('findImageBtn')?.addEventListener('click', findCanImage);
-  document.getElementById('clearImageBtn')?.addEventListener('click', clearSelectedImage);
-  document.getElementById('photoDrop')?.addEventListener('click', ()=>document.getElementById('photoFile')?.click());
   document.getElementById('photoFile')?.addEventListener('change', e=>loadPhoto(e.target));
   document.getElementById('importFile')?.addEventListener('change', e=>importJSON(e.target));
   document.getElementById('grid')?.addEventListener('click', e=>{
     const editBtn = e.target.closest('[data-edit-id]');
-    if(editBtn){ e.stopPropagation(); openEdit(editBtn.dataset.editId); return; }
+    if(editBtn){ e.preventDefault(); e.stopPropagation(); openEdit(editBtn.dataset.editId); return; }
     const deleteBtn = e.target.closest('[data-delete-id]');
-    if(deleteBtn){ e.stopPropagation(); confirmDelete(deleteBtn.dataset.deleteId); return; }
+    if(deleteBtn){ e.preventDefault(); e.stopPropagation(); confirmDelete(deleteBtn.dataset.deleteId); return; }
     const card = e.target.closest('[data-open-detail]');
-    if(card) openDetail(card.dataset.openDetail);
+    if(card){ e.preventDefault(); openDetail(card.dataset.openDetail); }
   });
   document.getElementById('imageSearchResults')?.addEventListener('click', e=>{
     const btn = e.target.closest('.image-result');
     if(!btn) return;
+    e.preventDefault();
     selectImageResult(Number(btn.dataset.idx));
   });
   document.getElementById('addModal')?.addEventListener('click', e=>{ if(e.target.id==='addModal') closeModal(); });
   document.getElementById('detailModal')?.addEventListener('click', e=>{ if(e.target.id==='detailModal') closeDetail(); });
+  document.addEventListener('click', e=>{
+    const t = e.target.closest('button, a, .star, .photo-drop, .nav-item, .bnav-item');
+    if(!t) return;
+    if(t.matches('.nav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view, t); return; }
+    if(t.matches('.bnav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view); return; }
+    if(t.id === 'menuBtn' || t.id === 'mobileBrandBtn'){ e.preventDefault(); toggleSidebar(); return; }
+    if(t.id === 'gridBtn'){ e.preventDefault(); setView('grid'); return; }
+    if(t.id === 'listBtn'){ e.preventDefault(); setView('list'); return; }
+    if(t.id === 'topAddBtn' || t.id === 'emptyAddBtn' || t.id === 'mobileAddBtn'){ e.preventDefault(); openAdd(); return; }
+    if(t.id === 'findImageBtn'){ e.preventDefault(); findCanImage(); return; }
+    if(t.id === 'clearImageBtn'){ e.preventDefault(); clearSelectedImage(); return; }
+    if(t.id === 'photoDrop'){ e.preventDefault(); document.getElementById('photoFile')?.click(); return; }
+    if(t.id === 'importJsonBtn'){ e.preventDefault(); document.getElementById('importFile')?.click(); return; }
+    if(t.id === 'exportJsonBtn'){ e.preventDefault(); exportJSON(); return; }
+    if(t.id === 'exportCsvBtn'){ e.preventDefault(); exportCSV(); return; }
+    if(t.id === 'clearAllBtn'){ e.preventDefault(); clearAll(); return; }
+    if(t.id === 'closeAddModalBtn' || t.id === 'cancelModalBtn'){ e.preventDefault(); closeModal(); return; }
+    if(t.id === 'saveCanBtn'){ e.preventDefault(); saveCan(); return; }
+    if(t.id === 'btnDel'){ e.preventDefault(); deleteCan(); return; }
+    if(t.id === 'editFromDetailBtn'){ e.preventDefault(); editFromDetail(); return; }
+    if(t.id === 'closeDetailBtn'){ e.preventDefault(); closeDetail(); return; }
+    if(t.classList.contains('star')){ e.preventDefault(); setRating(Number(t.dataset.v || 0)); return; }
+  }, true);
+  document.getElementById('sidebarOverlay')?.addEventListener('click', ()=>toggleSidebar(false), true);
   window.addEventListener('resize', updateMobileLayout);
   window.addEventListener('orientationchange', updateMobileLayout);
 }

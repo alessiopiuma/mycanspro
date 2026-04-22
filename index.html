@@ -165,6 +165,17 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 .photo-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .photo-actions .btn{flex:1;justify-content:center}
+.brand-logo-box{margin-top:12px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+.brand-logo-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.brand-logo-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)}
+.brand-logo-preview{width:72px;height:72px;border-radius:12px;background:var(--bg4);border:1px dashed var(--line2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.brand-logo-preview img{width:100%;height:100%;object-fit:contain;background:#fff}
+.brand-logo-placeholder{font-size:10px;color:var(--text3);text-align:center;line-height:1.25;padding:8px}
+.brand-logo-actions{display:flex;gap:8px;flex-wrap:wrap}
+.brand-logo-actions .btn{flex:1;justify-content:center}
+.brand-logo-help{margin-top:8px;font-size:12px;color:var(--text3);line-height:1.45}
+.brand-logo-inline{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid var(--line);flex-shrink:0}
+.brand-logo-inline img{width:100%;height:100%;object-fit:contain;background:#fff}
 .image-search-status{margin-top:10px;font-size:12px;color:var(--text3);line-height:1.45}
 .image-search-results{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .image-search-results.show{display:grid}
@@ -326,6 +337,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .field input,.field select,.field textarea{min-height:42px;font-size:13px}
   .field-row,.field-row3{grid-template-columns:1fr}
   .photo-drop{height:120px}
+  .brand-logo-preview{width:64px;height:64px}
+  .brand-logo-actions{flex-direction:column}
   .logo-tagline{display:none}
   .sidebar-footer .stats-mini{display:none}
   .nav-label{display:block}
@@ -362,6 +375,28 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .bnav-item.active svg{transform:scale(1.1)}
 
 
+/* BRANDS PAGE */
+.brands-page{display:grid;gap:14px}
+.brands-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:2px}
+.brands-summary{font-size:13px;color:var(--text3)}
+.brands-list{display:grid;gap:10px}
+.brand-row{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow-soft)}
+.brand-row-left{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-row-logo{width:52px;height:52px;border-radius:14px;background:var(--bg3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.brand-row-logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.brand-row-logo .brand-logo-placeholder{font-size:11px;padding:6px}
+.brand-row-info{min-width:0}
+.brand-row-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-row-meta{margin-top:3px;font-size:12px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap}
+.brand-row-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.brand-count-badge{min-width:34px;height:34px;border-radius:999px;padding:0 12px;background:rgba(232,255,71,.12);border:1px solid rgba(232,255,71,.24);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)}
+.brand-open-btn{white-space:nowrap}
+.brands-empty{background:var(--card);border:1px dashed var(--line2);border-radius:18px;padding:28px;text-align:center;color:var(--text3)}
+@media(max-width:768px){
+  .brand-row{padding:14px;align-items:flex-start;flex-direction:column}
+  .brand-row-left,.brand-row-actions{width:100%}
+  .brand-row-actions{justify-content:space-between}
+}
 button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.image-result,.star{pointer-events:auto;touch-action:manipulation}
 .main,.content,.topbar,.sidebar,.modal-bg,.detail-modal,.modal,.bottom-nav{pointer-events:auto}
 /* ANIMATIONS */
@@ -391,6 +426,11 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
       <a class="nav-item" data-view="stats" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V8M6 14V4M10 14V6M14 14V2"/></svg>
         <span>Statistiche</span>
+      </a>
+      <a class="nav-item" data-view="brands" href="#">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13h10M4 13V5l4-2 4 2v8M6 7h4M6 10h4"/></svg>
+        <span>Brand</span>
+        <span class="count" id="navBrandsCount">0</span>
       </a>
       <a class="nav-item" data-view="io" href="#">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10a1 1 0 011 1v0a1 1 0 01-1 1H3a1 1 0 01-1-1v0a1 1 0 011-1z"/></svg>
@@ -486,6 +526,20 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
     </div>
   </div>
 
+  <!-- BRANDS VIEW -->
+  <div id="viewBrands" class="content" style="display:none">
+    <div class="section-header">
+      <h2>Tutti i brand</h2>
+    </div>
+    <div class="brands-page">
+      <div class="brands-toolbar">
+        <div class="brands-summary" id="brandsSummary">0 brand registrati</div>
+      </div>
+      <div class="brands-list" id="brandsList"></div>
+      <div class="brands-empty" id="brandsEmpty" style="display:none">Non ci sono ancora brand nella collezione.</div>
+    </div>
+  </div>
+
   <!-- IO VIEW -->
   <div id="viewIo" style="display:none">
     <div class="io-section">
@@ -557,6 +611,31 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
         <div class="field"><label>Brand *</label><input type="text" id="fBrand" placeholder="es. Coca-Cola"></div>
         <div class="field"><label>Prodotto *</label><input type="text" id="fProduct" placeholder="es. Coca-Cola"></div>
         <div class="field"><label>Variante *</label><input type="text" id="fVariant" placeholder="es. Zero Sugar / Limited Edition"></div>
+      </div>
+      <div class="field">
+        <div class="brand-logo-box">
+          <div class="brand-logo-head">
+            <div>
+              <div class="brand-logo-title">Logo del brand</div>
+              <div class="brand-logo-help" id="brandLogoHelp">Carica un logo per il brand corrente. Se salvi, verrà usato per tutte le lattine di quel brand.</div>
+            </div>
+            <div class="brand-logo-preview" id="brandLogoPreview">
+              <div class="brand-logo-placeholder">Nessun
+logo</div>
+            </div>
+          </div>
+          <input type="file" id="brandLogoFile" accept="image/*" style="display:none">
+          <div class="brand-logo-actions">
+            <button type="button" class="btn btn-ghost" id="uploadBrandLogoBtn">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14V6M5 9l3-3 3 3M3 4h10"/></svg>
+              Carica logo
+            </button>
+            <button type="button" class="btn btn-ghost" id="clearBrandLogoBtn">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg>
+              Rimuovi logo
+            </button>
+          </div>
+        </div>
       </div>
       <div class="field-row3">
         <div class="field"><label>Anno</label><input type="text" id="fYear" placeholder="1994" maxlength="4"></div>
@@ -677,6 +756,10 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
     <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 4v8M4 8h8"/></svg>
     Aggiungi
   </button>
+  <button class="bnav-item" id="bn-brands" data-view="brands" type="button">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13h10M4 13V5l4-2 4 2v8M6 7h4M6 10h4"/></svg>
+    Brand
+  </button>
   <button class="bnav-item" id="bn-io" data-view="io" type="button">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
     Export
@@ -706,6 +789,7 @@ const imageSearchConfig = {
 
 let cans = [];
 let currentPhoto = null, currentPhotoChanged = false;
+let currentBrandLogo = null, currentBrandLogoChanged = false;
 let editId = null, detailId = null, currentRating = 0;
 let viewMode = 'grid', activeBrand = 'all', currentPage = 'collection';
 let imageSearchResults = [];
@@ -725,6 +809,8 @@ function loadCans(){
   loadLocal();
   renderBrandNav();
   render();
+  renderStats();
+  renderBrandsPage();
   showLoading(false);
 }
 
@@ -750,6 +836,17 @@ function showLoading(on){
 }
 
 function getBrands(){ return [...new Set(cans.map(c=>c.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); }
+function normalizeBrandKey(brand){ return (brand || '').trim().toLowerCase(); }
+function getBrandLogo(brand){
+  const key = normalizeBrandKey(brand);
+  if(!key) return null;
+  const hit = cans.find(c=>normalizeBrandKey(c.brand)===key && c.brandLogo);
+  return hit?.brandLogo || null;
+}
+function getBrandLogoHtml(brand, brandLogo){
+  const logo = brandLogo || getBrandLogo(brand);
+  return logo ? `<span class="brand-logo-inline"><img src="${logo}" alt="${brand || 'Brand'}"></span>` : '<span class="dot" style="background:currentColor;opacity:.85"></span>';
+}
 function condClass(c){
   if(!c) return '';
   if(c.includes('Mint')) return 'cond-mint';
@@ -779,6 +876,7 @@ function normalizeCan(raw){
     ...raw,
     id: raw.id || safeId(),
     brand: raw.brand || '',
+    brandLogo: raw.brandLogo || raw.logoBrand || raw.brand_logo || null,
     product,
     variant,
     category,
@@ -844,13 +942,15 @@ function renderBrandNav(){
     const a = document.createElement('a');
     a.href='#';
     a.className='nav-item'+(activeBrand===b?' active':'');
-    a.innerHTML=`<span class="dot" style="background:${colors[i%colors.length]}"></span><span>${b}</span><span class="count">${n}</span>`;
+    const logoHtml = getBrandLogo(b) ? getBrandLogoHtml(b, getBrandLogo(b)) : `<span class=\"dot\" style=\"background:${colors[i%colors.length]}\"></span>`;
+    a.innerHTML=`${logoHtml}<span>${b}</span><span class="count">${n}</span>`;
     a.addEventListener('click', e=>{e.preventDefault();activeBrand=b;renderBrandNav();render(); closeSidebarMobile();});
     el.appendChild(a);
   });
 }
 
 function render(){
+  const navBrands=document.getElementById('navBrandsCount'); if(navBrands) navBrands.textContent = getBrands().length;
   if(currentPage!=='collection') return;
   const list = getFiltered();
   const grid = document.getElementById('grid');
@@ -883,7 +983,7 @@ function render(){
       <div class="card-img">${img}<div class="img-overlay"></div></div>
       <div class="card-body">
         ${isList ? '<div class="card-info">' : ''}
-        <div class="card-brand">${c.brand || '—'}</div>
+        <div class="card-brand" style="display:flex;align-items:center;gap:6px">${getBrandLogoHtml(c.brand, c.brandLogo)}<span>${c.brand || '—'}</span></div>
         <div class="card-name" title="${title}">${title}</div>
         <div class="card-meta">
           <span class="card-year">${c.year||'—'}</span>
@@ -937,18 +1037,19 @@ function showView(v, triggerEl=null){
   if(activeEl) activeEl.classList.add('active');
   document.getElementById('viewCollection').style.display = v==='collection' ? 'block' : 'none';
   document.getElementById('viewStats').style.display = v==='stats' ? 'block' : 'none';
+  document.getElementById('viewBrands').style.display = v==='brands' ? 'block' : 'none';
   document.getElementById('viewIo').style.display = v==='io' ? 'block' : 'none';
   document.getElementById('searchArea').style.display = v==='collection' ? 'block' : 'none';
   document.getElementById('topbarActions').style.display = v==='collection' ? 'flex' : 'none';
-  const titles = {collection:'Collezione', stats:'Statistiche', io:'Import / Export'};
+  const titles = {collection:'Collezione', stats:'Statistiche', brands:'Brand', io:'Import / Export'};
   document.getElementById('viewTitle').textContent = titles[v] || 'Collezione';
-  ['collection','stats','io'].forEach(k=>document.getElementById('bn-'+k)?.classList.toggle('active', k===v));
+  ['collection','stats','brands','io'].forEach(k=>document.getElementById('bn-'+k)?.classList.toggle('active', k===v));
   if(v==='stats') renderStats();
+  if(v==='brands') renderBrandsPage();
   if(v==='collection') render();
   closeSidebarMobile();
   requestAnimationFrame(updateMobileLayout);
 }
-
 function renderStats(){
   const brands = getBrands();
   document.getElementById('stTotal').textContent = cans.length;
@@ -984,19 +1085,71 @@ function renderStats(){
   }
 }
 
+function openBrandFromList(brand){
+  activeBrand = brand || 'all';
+  renderBrandNav();
+  showView('collection');
+  render();
+}
+
+function renderBrandsPage(){
+  const listEl = document.getElementById('brandsList');
+  const emptyEl = document.getElementById('brandsEmpty');
+  const summaryEl = document.getElementById('brandsSummary');
+  const navBrands = document.getElementById('navBrandsCount');
+  if(!listEl) return;
+  const brands = getBrands().map(brand=>{
+    const items = cans.filter(c=>c.brand===brand);
+    const countries = [...new Set(items.map(c=>c.country).filter(Boolean))];
+    return {
+      brand,
+      logo: getBrandLogo(brand),
+      count: items.length,
+      countries: countries.length,
+      sample: items[0] || null
+    };
+  }).sort((a,b)=>a.brand.localeCompare(b.brand));
+  if(summaryEl) summaryEl.textContent = `${brands.length} brand registrati`;
+  if(navBrands) navBrands.textContent = brands.length;
+  if(emptyEl) emptyEl.style.display = brands.length ? 'none' : 'block';
+  listEl.innerHTML = brands.map(item=>{
+    const sampleText = item.sample ? [item.sample.product, item.sample.variant].filter(Boolean).join(' · ') : '';
+    const meta = [
+      `${item.count} lattina${item.count===1?'':'e'}`,
+      item.countries ? `${item.countries} paes${item.countries===1?'e':'i'}` : null,
+      sampleText || null
+    ].filter(Boolean).map(v=>`<span>${v}</span>`).join('');
+    const initials = item.brand.slice(0,2).toUpperCase();
+    const logo = item.logo ? `<img src="${item.logo}" alt="${item.brand}">` : `<div class="brand-logo-placeholder">${initials}</div>`;
+    return `<div class="brand-row">
+      <div class="brand-row-left">
+        <div class="brand-row-logo">${logo}</div>
+        <div class="brand-row-info">
+          <div class="brand-row-name">${item.brand}</div>
+          <div class="brand-row-meta">${meta}</div>
+        </div>
+      </div>
+      <div class="brand-row-actions">
+        <div class="brand-count-badge">${item.count}</div>
+        <button class="btn btn-ghost brand-open-btn" type="button" data-open-brand="${item.brand.replace(/"/g,'&quot;')}">Apri collezione</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function openAdd(){
-  editId=null; currentPhoto=null; currentPhotoChanged=false; currentRating=0;
+  editId=null; currentPhoto=null; currentPhotoChanged=false; currentBrandLogo=null; currentBrandLogoChanged=false; currentRating=0;
   resetImageSearchResults();
   setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online.');
   document.getElementById('modalTitle').textContent='Nuova Lattina';
   ['fBrand','fProduct','fVariant','fYear','fCountry','fVolume','fCond','fCat','fRarity','fValue','fSource','fCollectionType','fNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnDel').style.display='none';
-  resetPhoto(); updateStars(0);
+  resetPhoto(); resetBrandLogo(); updateStars(0);
   document.getElementById('addModal').classList.add('open');
 }
 function openEdit(id){
   const c=cans.find(x=>x.id===id); if(!c) return;
-  editId=id; currentPhoto=null; currentPhotoChanged=false; currentRating=c.rating||0;
+  editId=id; currentPhoto=null; currentPhotoChanged=false; currentBrandLogo=null; currentBrandLogoChanged=false; currentRating=c.rating||0;
   resetImageSearchResults();
   setImageSearchStatus('Puoi mantenere la foto attuale, sostituirla manualmente o cercarne una nuova.');
   document.getElementById('modalTitle').textContent='Modifica Lattina';
@@ -1015,6 +1168,7 @@ function openEdit(id){
   document.getElementById('fNotes').value=c.notes||'';
   document.getElementById('btnDel').style.display='inline-flex';
   updateStars(currentRating);
+  updateBrandLogoPreview(c.brandLogo || getBrandLogo(c.brand));
   if(c.photoUrl){
     document.getElementById('photoDrop').innerHTML=`<img src="${c.photoUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
   } else resetPhoto();
@@ -1023,6 +1177,38 @@ function openEdit(id){
 function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
 function editFromDetail(){ closeDetail(); if(detailId) openEdit(detailId); }
 function resetPhoto(){ document.getElementById('photoDrop').innerHTML=`<div class="photo-drop-label"><div class="icon">📸</div><p>Clicca per caricare</p><span>JPG, PNG, WEBP</span></div>`; }
+function updateBrandLogoPreview(src){
+  const preview = document.getElementById('brandLogoPreview');
+  const help = document.getElementById('brandLogoHelp');
+  if(!preview) return;
+  if(src){
+    preview.innerHTML = `<img src="${src}" alt="Logo brand">`;
+    currentBrandLogo = src;
+    if(help){
+      const brandName = document.getElementById('fBrand')?.value.trim();
+      help.textContent = brandName ? `Logo pronto per il brand ${brandName}. Verrà applicato a tutte le sue lattine quando salvi.` : 'Logo pronto. Inserisci il nome del brand e salva per applicarlo.';
+    }
+  } else {
+    preview.innerHTML = `<div class="brand-logo-placeholder">Nessun<br>logo</div>`;
+    currentBrandLogo = null;
+    if(help) help.textContent = 'Carica un logo per il brand corrente. Se salvi, verrà usato per tutte le lattine di quel brand.';
+  }
+}
+function resetBrandLogo(){ currentBrandLogo=null; currentBrandLogoChanged=false; updateBrandLogoPreview(null); }
+function syncBrandLogoFromBrandField(force=false){
+  const brand = document.getElementById('fBrand')?.value.trim();
+  if(!brand){ if(force || !currentBrandLogoChanged) updateBrandLogoPreview(null); return; }
+  if(currentBrandLogoChanged && !force) return;
+  updateBrandLogoPreview(getBrandLogo(brand));
+}
+function loadBrandLogo(input){
+  const file=input.files?.[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ currentBrandLogoChanged=true; updateBrandLogoPreview(e.target.result); };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function clearBrandLogo(){ currentBrandLogoChanged=true; updateBrandLogoPreview(null); }
 function loadPhoto(input){
   const file=input.files?.[0]; if(!file) return;
   const reader=new FileReader();
@@ -1288,6 +1474,7 @@ function collectFormData(){
   return normalizeCan({
     id: editId || safeId(),
     brand: document.getElementById('fBrand').value.trim(),
+    brandLogo: currentBrandLogoChanged ? currentBrandLogo : (getBrandLogo(document.getElementById('fBrand').value.trim()) || (editId && cans.find(x=>x.id===editId)?.brandLogo) || null),
     product: document.getElementById('fProduct').value.trim(),
     variant: document.getElementById('fVariant').value.trim(),
     model: document.getElementById('fVariant').value.trim(),
@@ -1314,17 +1501,22 @@ async function saveCan(){
   if(!data.brand || !data.product || !data.variant){ toast('Brand, prodotto e variante sono obbligatori','error'); return; }
   if(editId){ cans = cans.map(c=>c.id===editId ? data : c); toast('Lattina aggiornata ✓'); }
   else { cans.unshift(data); toast('Lattina aggiunta ✓'); }
+  const brandKey = normalizeBrandKey(data.brand);
+  cans = cans.map(c=>normalizeBrandKey(c.brand)===brandKey ? {...c, brandLogo:data.brandLogo || null} : c);
   saveLocal();
   renderBrandNav();
+  renderStats();
+  renderBrandsPage();
   closeModal();
   render();
 }
 function confirmDelete(id){ if(confirm('Eliminare questa lattina?')) deleteCan(id); }
-function deleteCan(id=editId){ if(!id) return; cans = cans.filter(c=>c.id!==id); saveLocal(); editId=null; closeModal(); closeDetail(); renderBrandNav(); render(); toast('Lattina eliminata'); }
+function deleteCan(id=editId){ if(!id) return; cans = cans.filter(c=>c.id!==id); saveLocal(); editId=null; closeModal(); closeDetail(); renderBrandNav(); renderStats(); renderBrandsPage(); render(); toast('Lattina eliminata'); }
 function openDetail(id){
   const c=cans.find(x=>x.id===id); if(!c) return; detailId=id;
   const title=displayName(c);
-  document.getElementById('dHero').innerHTML = c.photoUrl ? `<img class="detail-hero-img" src="${c.photoUrl}" alt="${title}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand||''}</div><div class="detail-hero-name">${title}</div></div>` : `<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand||''}</div><div class="detail-hero-name">${title}</div></div>`;
+  const detailBrand = `<div class="detail-hero-brand" style="display:flex;align-items:center;gap:8px">${getBrandLogoHtml(c.brand, c.brandLogo)}<span>${c.brand||''}</span></div>`;
+  document.getElementById('dHero').innerHTML = c.photoUrl ? `<img class="detail-hero-img" src="${c.photoUrl}" alt="${title}"><div class="detail-hero-overlay">${detailBrand}<div class="detail-hero-name">${title}</div></div>` : `<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay">${detailBrand}<div class="detail-hero-name">${title}</div></div>`;
   document.getElementById('dGrid').innerHTML = [
     ['Anno', c.year||'—', 'accent'], ['Paese', c.country||'—', ''], ['Volume', c.volume ? c.volume+' ml' : '—', ''],
     ['Condizione', c.condition||c.cond||'—', ''], ['Categoria', c.category||c.cat||'—', ''], ['Rarità', c.rarity||'—', ''],
@@ -1338,13 +1530,15 @@ function closeDetail(){ document.getElementById('detailModal').classList.remove(
 function exportJSON(){ const blob=new Blob([JSON.stringify(cans,null,2)],{type:'application/json'}); downloadBlob(blob,'mycanspro-collection.json'); }
 function exportCSV(){ const headers=['Brand','Prodotto','Variante','Anno','Paese','Volume','Condizione','Categoria','Rarità','Tipo','Valore','Provenienza','Note','Rating']; const rows=cans.map(c=>[c.brand,c.product,c.variant,c.year,c.country,c.volume,c.condition||c.cond,c.category||c.cat,c.rarity,c.collectionType,c.valueEstimate||c.value,c.source,c.notes,c.rating].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')); const blob=new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8;'}); downloadBlob(blob,'mycanspro-collection.csv'); }
 function downloadBlob(blob, filename){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function importJSON(input){ const file=input.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try { const data=JSON.parse(e.target.result); const incoming = Array.isArray(data) ? data : (Array.isArray(data.cans) ? data.cans : []); cans = [...incoming.map(normalizeCan), ...cans].filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); saveLocal(); renderBrandNav(); render(); toast('Import completato ✓'); } catch(err){ toast('JSON non valido','error'); } }; reader.readAsText(file); input.value=''; }
-function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione?')){ cans=[]; saveLocal(); renderBrandNav(); render(); toast('Collezione cancellata'); } }
+function importJSON(input){ const file=input.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try { const data=JSON.parse(e.target.result); const incoming = Array.isArray(data) ? data : (Array.isArray(data.cans) ? data.cans : []); cans = [...incoming.map(normalizeCan), ...cans].filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); saveLocal(); renderBrandNav(); renderStats(); renderBrandsPage(); render(); toast('Import completato ✓'); } catch(err){ toast('JSON non valido','error'); } }; reader.readAsText(file); input.value=''; }
+function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione?')){ cans=[]; saveLocal(); renderBrandNav(); renderStats(); renderBrandsPage(); render(); toast('Collezione cancellata'); } }
 
 function bindEvents(){
   document.getElementById('searchInput')?.addEventListener('input', render);
   document.getElementById('sortSel')?.addEventListener('change', render);
   document.getElementById('photoFile')?.addEventListener('change', e=>loadPhoto(e.target));
+  document.getElementById('brandLogoFile')?.addEventListener('change', e=>loadBrandLogo(e.target));
+  document.getElementById('fBrand')?.addEventListener('input', ()=>syncBrandLogoFromBrandField(false));
   document.getElementById('importFile')?.addEventListener('change', e=>importJSON(e.target));
   document.getElementById('grid')?.addEventListener('click', e=>{
     const editBtn = e.target.closest('[data-edit-id]');
@@ -1360,6 +1554,12 @@ function bindEvents(){
     e.preventDefault();
     selectImageResult(Number(btn.dataset.idx));
   });
+  document.getElementById('brandsList')?.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-open-brand]');
+    if(!btn) return;
+    e.preventDefault();
+    openBrandFromList(btn.dataset.openBrand);
+  });
   document.getElementById('addModal')?.addEventListener('click', e=>{ if(e.target.id==='addModal') closeModal(); });
   document.getElementById('detailModal')?.addEventListener('click', e=>{ if(e.target.id==='detailModal') closeDetail(); });
   document.addEventListener('click', e=>{
@@ -1373,6 +1573,8 @@ function bindEvents(){
     if(t.id === 'topAddBtn' || t.id === 'emptyAddBtn' || t.id === 'mobileAddBtn'){ e.preventDefault(); openAdd(); return; }
     if(t.id === 'findImageBtn'){ e.preventDefault(); findCanImage(); return; }
     if(t.id === 'clearImageBtn'){ e.preventDefault(); clearSelectedImage(); return; }
+    if(t.id === 'uploadBrandLogoBtn'){ e.preventDefault(); document.getElementById('brandLogoFile')?.click(); return; }
+    if(t.id === 'clearBrandLogoBtn'){ e.preventDefault(); clearBrandLogo(); return; }
     if(t.id === 'photoDrop'){ e.preventDefault(); document.getElementById('photoFile')?.click(); return; }
     if(t.id === 'importJsonBtn'){ e.preventDefault(); document.getElementById('importFile')?.click(); return; }
     if(t.id === 'exportJsonBtn'){ e.preventDefault(); exportJSON(); return; }
@@ -1390,7 +1592,7 @@ function bindEvents(){
   window.addEventListener('orientationchange', updateMobileLayout);
 }
 
-window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
+window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
 
 document.addEventListener('DOMContentLoaded', ()=>{
   bindEvents();

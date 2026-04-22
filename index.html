@@ -577,12 +577,96 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <!-- TOAST -->
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
 
-<script>
-let cans = JSON.parse(localStorage.getItem('canvault_v2') || '[]');
-let currentPhoto = null, editId = null, detailId = null, currentRating = 0;
+<script type="module">
+// ─── FIREBASE CONFIG ───────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC46Mh3TzeFUfsegiaFRwQ1sYtQKjQnqcc",
+  authDomain: "mycanspro.firebaseapp.com",
+  projectId: "mycanspro",
+  storageBucket: "mycanspro.firebasestorage.app",
+  messagingSenderId: "66714134251",
+  appId: "1:66714134251:web:90e2777d1be6b3347b00ae"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const COLL = 'lattine';
+
+// ─── STATE ─────────────────────────────────────────────────────────
+let cans = [];
+let currentPhoto = null, currentPhotoChanged = false;
+let editId = null, detailId = null, currentRating = 0;
 let viewMode = 'grid', activeBrand = 'all', currentPage = 'collection';
 
-function save(){ localStorage.setItem('canvault_v2', JSON.stringify(cans)); }
+// ─── FIREBASE CRUD ─────────────────────────────────────────────────
+async function loadCans(){
+  showLoading(true);
+  try {
+    const q = query(collection(db, COLL), orderBy('addedAt','desc'));
+    const snap = await getDocs(q);
+    cans = snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){
+    // fallback senza ordinamento se l'indice non esiste ancora
+    const snap = await getDocs(collection(db, COLL));
+    cans = snap.docs.map(d=>({id:d.id,...d.data()}));
+  }
+  showLoading(false);
+  renderBrandNav();
+  render();
+}
+
+async function saveCanToFirebase(canData, photoBase64, oldPhotoUrl){
+  // Upload foto se cambiata
+  let photoUrl = canData.photoUrl || null;
+  if(photoBase64 && currentPhotoChanged){
+    try {
+      const storageRef = ref(storage, `lattine/${Date.now()}.jpg`);
+      await uploadString(storageRef, photoBase64, 'data_url');
+      photoUrl = await getDownloadURL(storageRef);
+      // Elimina vecchia foto
+      if(oldPhotoUrl) try{ await deleteObject(ref(storage, oldPhotoUrl)); }catch(e){}
+    } catch(e){ toast('Errore upload foto','error'); }
+  } else if(!photoBase64 && currentPhotoChanged){
+    // Foto rimossa
+    if(oldPhotoUrl) try{ await deleteObject(ref(storage, oldPhotoUrl)); }catch(e){}
+    photoUrl = null;
+  }
+
+  const data = {...canData, photoUrl, photo: null}; // non salviamo base64 su Firestore
+  delete data.photo;
+
+  if(editId){
+    await updateDoc(doc(db, COLL, editId), data);
+    toast('Lattina aggiornata ✓');
+  } else {
+    await addDoc(collection(db, COLL), {...data, addedAt: Date.now()});
+    toast('Lattina aggiunta alla collezione ✓');
+  }
+  await loadCans();
+}
+
+async function deleteCanFromFirebase(id){
+  const c = cans.find(x=>x.id===id);
+  if(c?.photoUrl) try{ await deleteObject(ref(storage, c.photoUrl)); }catch(e){}
+  await deleteDoc(doc(db, COLL, id));
+  await loadCans();
+}
+
+function showLoading(on){
+  let el = document.getElementById('loadingBar');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'loadingBar';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;height:2px;background:var(--accent);z-index:9999;transition:opacity .3s';
+    document.body.appendChild(el);
+  }
+  el.style.opacity = on ? '1' : '0';
+}
 
 function toast(msg, type='success'){
   const t = document.getElementById('toast');
@@ -671,7 +755,7 @@ function render(){
   if(!list.length){ grid.innerHTML=''; return; }
   const isList = grid.classList.contains('list-view');
   grid.innerHTML = list.map((c,i)=>{
-    const img = c.photo ? `<img src="${c.photo}" alt="${c.model}">` : `<div class="no-img">🥫</div>`;
+    const img = c.photoUrl ? `<img src="${c.photoUrl}" alt="${c.model}">` : `<div class="no-img">🥫</div>`;
     const cClass = condClass(c.cond);
     const condBadge = c.cond ? `<span class="card-cond ${cClass}">${c.cond.split(' ')[0]}</span>` : '';
     const flags = [c.cat, c.country].filter(Boolean).map(f=>`<span class="flag">${f}</span>`).join('');
@@ -747,7 +831,7 @@ function renderStats(){
   document.getElementById('stBrands').textContent = brands.length;
   const countries = [...new Set(cans.map(c=>c.country).filter(Boolean))];
   document.getElementById('stCountries').textContent = countries.length;
-  document.getElementById('stWithPhoto').textContent = cans.filter(c=>c.photo).length;
+  document.getElementById('stWithPhoto').textContent = cans.filter(c=>c.photoUrl).length;
   // Brand chart
   const brandCounts = brands.map(b=>({b,n:cans.filter(c=>c.brand===b).length})).sort((a,b)=>b.n-a.n).slice(0,8);
   const maxB = brandCounts[0]?.n||1;
@@ -782,18 +866,9 @@ function renderStats(){
 }
 
 function openAdd(){
-  editId=null; currentPhoto=null; currentRating=0;
+  editId=null; currentPhoto=null; currentPhotoChanged=false; currentRating=0;
   document.getElementById('modalTitle').textContent='Nuova Lattina';
-  document.getElementById('fBrand').value='';
-  document.getElementById('fModel').value='';
-  document.getElementById('fYear').value='';
-  document.getElementById('fCountry').value='';
-  document.getElementById('fVolume').value='';
-  document.getElementById('fCond').value='';
-  document.getElementById('fCat').value='';
-  document.getElementById('fValue').value='';
-  document.getElementById('fSource').value='';
-  document.getElementById('fNotes').value='';
+  ['fBrand','fModel','fYear','fCountry','fVolume','fCond','fCat','fValue','fSource','fNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('btnDel').style.display='none';
   resetPhoto(); updateStars(0);
   document.getElementById('addModal').classList.add('open');
@@ -802,7 +877,7 @@ function openAdd(){
 
 function openEdit(id){
   const c=cans.find(x=>x.id===id); if(!c) return;
-  editId=id; currentPhoto=c.photo||null; currentRating=c.rating||0;
+  editId=id; currentPhoto=null; currentPhotoChanged=false; currentRating=c.rating||0;
   document.getElementById('modalTitle').textContent='Modifica Lattina';
   document.getElementById('fBrand').value=c.brand;
   document.getElementById('fModel').value=c.model;
@@ -816,8 +891,8 @@ function openEdit(id){
   document.getElementById('fNotes').value=c.notes||'';
   document.getElementById('btnDel').style.display='inline-flex';
   updateStars(currentRating);
-  if(c.photo){
-    document.getElementById('photoDrop').innerHTML=`<img src="${c.photo}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+  if(c.photoUrl){
+    document.getElementById('photoDrop').innerHTML=`<img src="${c.photoUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
   } else resetPhoto();
   document.getElementById('addModal').classList.add('open');
 }
@@ -831,7 +906,6 @@ function resetPhoto(){
 
 function loadPhoto(input){
   const file=input.files[0]; if(!file) return;
-  // Resize image before storing
   const img=new Image();
   const reader=new FileReader();
   reader.onload=e=>{
@@ -843,6 +917,7 @@ function loadPhoto(input){
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       currentPhoto=canvas.toDataURL('image/jpeg',0.82);
+      currentPhotoChanged=true;
       document.getElementById('photoDrop').innerHTML=`<img src="${currentPhoto}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
     };
     img.src=e.target.result;
@@ -857,12 +932,14 @@ function updateStars(v){
   currentRating=v;
 }
 
-function saveCan(){
+async function saveCan(){
   const brand=document.getElementById('fBrand').value.trim();
   const model=document.getElementById('fModel').value.trim();
   if(!brand||!model){ toast('Brand e modello sono obbligatori','error'); return; }
-  const can={
-    id: editId||(Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
+  const btnSave = document.querySelector('.modal-footer .btn-primary');
+  btnSave.textContent='Salvataggio...'; btnSave.disabled=true;
+  const oldPhotoUrl = editId ? (cans.find(x=>x.id===editId)?.photoUrl||null) : null;
+  const canData = {
     brand, model,
     year: document.getElementById('fYear').value.trim(),
     country: document.getElementById('fCountry').value.trim(),
@@ -873,32 +950,37 @@ function saveCan(){
     source: document.getElementById('fSource').value.trim(),
     notes: document.getElementById('fNotes').value.trim(),
     rating: currentRating,
-    photo: currentPhoto,
-    addedAt: editId ? (cans.find(x=>x.id===editId)?.addedAt||Date.now()) : Date.now()
+    photoUrl: oldPhotoUrl
   };
-  if(editId){ const i=cans.findIndex(x=>x.id===editId); if(i>-1) cans[i]=can; toast('Lattina aggiornata'); }
-  else{ cans.push(can); toast('Lattina aggiunta alla collezione'); }
-  save(); closeModal(); renderBrandNav(); render();
+  try {
+    await saveCanToFirebase(canData, currentPhotoChanged ? currentPhoto : null, oldPhotoUrl);
+    closeModal();
+  } catch(e){ toast('Errore salvataggio: '+e.message,'error'); }
+  btnSave.textContent='Salva'; btnSave.disabled=false;
 }
 
-function deleteCan(){
+async function deleteCan(){
   if(!editId||!confirm('Eliminare questa lattina dalla collezione?')) return;
-  cans=cans.filter(c=>c.id!==editId);
-  save(); closeModal(); renderBrandNav(); render(); toast('Lattina eliminata','error');
+  try {
+    await deleteCanFromFirebase(editId);
+    closeModal(); toast('Lattina eliminata','error');
+  } catch(e){ toast('Errore eliminazione','error'); }
 }
 
-function confirmDelete(id){
+async function confirmDelete(id){
   const c=cans.find(x=>x.id===id); if(!c) return;
   if(!confirm(`Eliminare "${c.model}"?`)) return;
-  cans=cans.filter(x=>x.id!==id);
-  save(); renderBrandNav(); render(); toast('Lattina eliminata','error');
+  try {
+    await deleteCanFromFirebase(id);
+    toast('Lattina eliminata','error');
+  } catch(e){ toast('Errore eliminazione','error'); }
 }
 
 function openDetail(id){
   detailId=id; const c=cans.find(x=>x.id===id); if(!c) return;
   const hero=document.getElementById('dHero');
-  if(c.photo){
-    hero.innerHTML=`<img class="detail-hero-img" src="${c.photo}" alt="${c.model}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
+  if(c.photoUrl){
+    hero.innerHTML=`<img class="detail-hero-img" src="${c.photoUrl}" alt="${c.model}"><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
   } else {
     hero.innerHTML=`<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay"><div class="detail-hero-brand">${c.brand}</div><div class="detail-hero-name">${c.model}</div></div>`;
   }
@@ -919,9 +1001,10 @@ function openDetail(id){
 function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
 
 function exportJSON(){
-  const blob=new Blob([JSON.stringify(cans,null,2)],{type:'application/json'});
+  const exportData = cans.map(c=>({...c, photo:undefined}));
+  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='canvault-collezione.json'; a.click();
+  a.download='mycanspro-collezione.json'; a.click();
   toast('Esportazione completata');
 }
 
@@ -931,31 +1014,43 @@ function exportCSV(){
   const csv=[headers.map(h=>`"${h}"`).join(','),...rows.map(r=>r.join(','))].join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='canvault-collezione.csv'; a.click();
+  a.download='mycanspro-collezione.csv'; a.click();
   toast('CSV esportato');
 }
 
-function importJSON(input){
+async function importJSON(input){
   const file=input.files[0]; if(!file) return;
   const r=new FileReader();
-  r.onload=e=>{
+  r.onload=async e=>{
     try{
       const data=JSON.parse(e.target.result);
       if(!Array.isArray(data)) throw new Error();
       const existing=new Set(cans.map(c=>c.id));
-      const newOnes=data.filter(c=>!existing.has(c.id));
-      cans=[...cans,...newOnes];
-      save(); renderBrandNav(); render();
-      toast(`Importate ${newOnes.length} nuove lattine`);
+      let count=0;
+      for(const c of data){
+        if(!existing.has(c.id)){
+          const {id,...rest}=c;
+          await addDoc(collection(db, COLL), {...rest, addedAt: rest.addedAt||Date.now()});
+          count++;
+        }
+      }
+      await loadCans();
+      toast(`Importate ${count} nuove lattine`);
     } catch(err){ toast('File JSON non valido','error'); }
   };
   r.readAsText(file);
   input.value='';
 }
 
-function clearAll(){
+async function clearAll(){
   if(!confirm('Cancellare TUTTA la collezione? Questa azione è irreversibile.')) return;
-  cans=[]; save(); activeBrand='all'; renderBrandNav(); render();
+  showLoading(true);
+  for(const c of cans){
+    if(c.photoUrl) try{ await deleteObject(ref(storage, c.photoUrl)); }catch(e){}
+    await deleteDoc(doc(db, COLL, c.id));
+  }
+  cans=[]; activeBrand='all'; renderBrandNav(); render();
+  showLoading(false);
   toast('Collezione cancellata','error');
 }
 
@@ -972,21 +1067,17 @@ document.getElementById('detailModal').addEventListener('click',e=>{if(e.target=
 // Search
 document.getElementById('searchInput').addEventListener('input',render);
 
-// Init
-renderBrandNav();
-render();
+// Expose functions to global scope (needed for onclick in HTML)
+window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail;
+window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail;
+window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete;
+window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar;
+window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating;
+window.loadPhoto=loadPhoto; window.exportJSON=exportJSON; window.exportCSV=exportCSV;
+window.importJSON=importJSON; window.clearAll=clearAll;
 
-// Add some demo data if empty
-if(cans.length===0){
-  const demo=[
-    {id:'demo1',brand:'Coca-Cola',model:'Edizione Mondiale USA 1994',year:'1994',country:'USA',volume:'355',cond:'Ottima',cat:'Cola',value:'25',source:'eBay',notes:'Lattina originale del Mondiale di calcio USA 1994. Condizioni eccellenti, mai aperta.',rating:5,photo:null,addedAt:Date.now()-86400000*10},
-    {id:'demo2',brand:'Pepsi',model:'Crystal Pepsi 1992',year:'1992',country:'USA',volume:'355',cond:'Buona',cat:'Cola',value:'40',source:'Mercatino',notes:'Rara versione trasparente. Leggeri segni sul fondo.',rating:4,photo:null,addedAt:Date.now()-86400000*8},
-    {id:'demo3',brand:'Sprite',model:'Summer Edition 2001',year:'2001',country:'Italia',volume:'330',cond:'Mint (perfetta)',cat:'Cola',value:'8',source:'Fiera del collezionismo',notes:'',rating:3,photo:null,addedAt:Date.now()-86400000*5},
-    {id:'demo4',brand:'Coca-Cola',model:'Atlanta 1996 Olympics',year:'1996',country:'USA',volume:'355',cond:'Ottima',cat:'Cola',value:'35',source:'Collega',notes:'Commemorativa delle Olimpiadi di Atlanta.',rating:5,photo:null,addedAt:Date.now()-86400000*3},
-    {id:'demo5',brand:'Fanta',model:'World Cup France 1998',year:'1998',country:'Francia',volume:'330',cond:'Discreta',cat:'Cola',value:'12',source:'Negozio vintage',notes:'',rating:2,photo:null,addedAt:Date.now()-86400000*1},
-  ];
-  cans=demo; save(); renderBrandNav(); render();
-}
+// Init — carica da Firebase
+loadCans();
 </script>
 </body>
 </html>

@@ -918,7 +918,63 @@ logo</div>
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
 
 
-<script>
+<script type="module">
+// ─── FIREBASE ──────────────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC46Mh3TzeFUfsegiaFRwQ1sYtQKjQnqcc",
+  authDomain: "mycanspro.firebaseapp.com",
+  projectId: "mycanspro",
+  storageBucket: "mycanspro.firebasestorage.app",
+  messagingSenderId: "66714134251",
+  appId: "1:66714134251:web:90e2777d1be6b3347b00ae"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const storage = getStorage(fbApp);
+const COLL = 'lattine';
+
+// ─── FIREBASE HELPERS ──────────────────────────────────────────────
+async function fbLoadCans(){
+  try {
+    const q = query(collection(db, COLL), orderBy('addedAt','desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d=>({...d.data(), id:d.id}));
+  } catch(e){
+    const snap = await getDocs(collection(db, COLL));
+    return snap.docs.map(d=>({...d.data(), id:d.id}));
+  }
+}
+
+async function fbUploadPhoto(base64, oldUrl){
+  try {
+    const sRef = storageRef(storage, `lattine/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`);
+    await uploadString(sRef, base64, 'data_url');
+    const url = await getDownloadURL(sRef);
+    if(oldUrl) try{ await deleteObject(storageRef(storage, oldUrl)); }catch(e){}
+    return url;
+  } catch(e){ console.error('Upload foto:', e); return null; }
+}
+
+async function fbDeletePhoto(url){
+  if(!url) return;
+  try{ await deleteObject(storageRef(storage, url)); }catch(e){}
+}
+
+async function fbSave(canData, isNew){
+  const {id, ...data} = canData;
+  if(isNew){ const ref = await addDoc(collection(db, COLL), data); return ref.id; }
+  else { await updateDoc(doc(db, COLL, id), data); return id; }
+}
+
+async function fbDelete(id){
+  await deleteDoc(doc(db, COLL, id));
+}
+// ───────────────────────────────────────────────────────────────────
+
 (function(){
 'use strict';
 
@@ -991,17 +1047,18 @@ let brandStyleLogoOriginal = null;
 let brandStyleLogoTransform = { scale: 1, x: 0, y: 0 };
 
 function safeId(){ return 'can_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
-function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cans)); }
-function loadLocal(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    cans = raw ? JSON.parse(raw).map(normalizeCan) : [];
-  } catch(e){ cans = []; }
-}
+function saveLocal(){ /* dati su Firebase, localStorage non usato */ }
+function loadLocal(){ /* dati su Firebase */ }
 
-function loadCans(){
+async function loadCans(){
   showLoading(true);
-  loadLocal();
+  try {
+    cans = (await fbLoadCans()).map(normalizeCan);
+  } catch(e){
+    console.error('Errore caricamento Firebase:', e);
+    toast('Errore connessione Firebase','error');
+    cans = [];
+  }
   renderBrandNav();
   render();
   renderStats();
@@ -1422,30 +1479,34 @@ function onBrandStyleNameInput(value){
   brandStyleEditingName = (value || '').trimStart();
   updateBrandStylePreview();
 }
-function saveBrandStyle(){
+async function saveBrandStyle(){
   const nextBrandName = (brandStyleEditingName || '').trim();
   if(!nextBrandName){ toast('Inserisci il nome del brand','error'); return; }
   const originalKey = normalizeBrandKey(brandStyleOriginalName || brandStyleEditingName);
   const nextKey = normalizeBrandKey(nextBrandName);
   let updated = false;
-  cans = cans.map(c=>{
+  const updatedCans = cans.map(c=>{
     if(normalizeBrandKey(c.brand) !== originalKey) return c;
     updated = true;
     return { ...c, brand: nextBrandName, brandLogo: brandStyleLogo || null, brandColor: brandStyleColor || '#e3ff00' };
   });
   if(!updated){ toast('Brand non trovato','error'); return; }
-  if(activeBrand !== 'all' && normalizeBrandKey(activeBrand) === originalKey){
-    activeBrand = nextBrandName;
-  }
-  brandStyleOriginalName = nextBrandName;
-  brandStyleEditingName = nextBrandName;
-  saveLocal();
-  renderBrandNav();
-  renderStats();
-  renderBrandsPage();
-  render();
-  closeBrandStyleEditor();
-  toast('Brand aggiornato ✓');
+  showLoading(true);
+  try {
+    for(const c of updatedCans){
+      if(normalizeBrandKey(c.brand) === nextKey){
+        const {id,...rest}=c; await updateDoc(doc(db,COLL,id),rest);
+      }
+    }
+    cans = updatedCans;
+    if(activeBrand !== 'all' && normalizeBrandKey(activeBrand) === originalKey) activeBrand = nextBrandName;
+    brandStyleOriginalName = nextBrandName;
+    brandStyleEditingName = nextBrandName;
+    renderBrandNav(); renderStats(); renderBrandsPage(); render();
+    closeBrandStyleEditor();
+    toast('Brand aggiornato ✓');
+  } catch(e){ toast('Errore aggiornamento brand','error'); }
+  showLoading(false);
 }
 
 function openBrandFromList(brand){
@@ -1942,19 +2003,69 @@ function collectFormData(){
 async function saveCan(){
   const data = collectFormData();
   if(!data.brand || !data.product || !data.variant){ toast('Brand, prodotto e variante sono obbligatori','error'); return; }
-  if(editId){ cans = cans.map(c=>c.id===editId ? data : c); toast('Lattina aggiornata ✓'); }
-  else { cans.unshift(data); toast('Lattina aggiunta ✓'); }
-  const brandKey = normalizeBrandKey(data.brand);
-  cans = cans.map(c=>normalizeBrandKey(c.brand)===brandKey ? {...c, brandLogo:data.brandLogo || null, brandColor:data.brandColor || '#e3ff00'} : c);
-  saveLocal();
-  renderBrandNav();
-  renderStats();
-  renderBrandsPage();
-  closeModal();
-  render();
+  const btnSave = document.querySelector('.modal-footer .btn-primary, #addModal .btn-primary');
+  if(btnSave){ btnSave.textContent='Salvataggio...'; btnSave.disabled=true; }
+  try {
+    const isNew = !editId;
+    const oldCan = editId ? cans.find(c=>c.id===editId) : null;
+    const oldPhotoUrl = oldCan?.photoUrl || null;
+
+    // Upload foto se cambiata
+    if(currentPhotoChanged && currentPhoto){
+      const newUrl = await fbUploadPhoto(currentPhoto, oldPhotoUrl);
+      if(newUrl) data.photoUrl = newUrl;
+    } else if(currentPhotoChanged && !currentPhoto){
+      await fbDeletePhoto(oldPhotoUrl);
+      data.photoUrl = null;
+    } else {
+      data.photoUrl = oldPhotoUrl;
+    }
+
+    // Sincronizza brandLogo/brandColor su tutto il brand
+    const brandKey = normalizeBrandKey(data.brand);
+
+    if(isNew){
+      data.addedAt = Date.now();
+      const newId = await fbSave(data, true);
+      data.id = newId;
+      cans.unshift(data);
+    } else {
+      data.id = editId;
+      await fbSave(data, false);
+      cans = cans.map(c=>c.id===editId ? data : c);
+    }
+
+    // Aggiorna brandLogo/Color per tutto il brand su Firebase (solo modificati)
+    if(currentBrandLogoChanged || currentBrandColorChanged){
+      const sameBrand = cans.filter(c=>normalizeBrandKey(c.brand)===brandKey && c.id!==data.id);
+      for(const c of sameBrand){
+        const updated = {...c, brandLogo: data.brandLogo||null, brandColor: data.brandColor||'#e3ff00'};
+        await fbSave(updated, false);
+      }
+      cans = cans.map(c=>normalizeBrandKey(c.brand)===brandKey ? {...c, brandLogo:data.brandLogo||null, brandColor:data.brandColor||'#e3ff00'} : c);
+    }
+
+    toast(isNew ? 'Lattina aggiunta ✓' : 'Lattina aggiornata ✓');
+    renderBrandNav(); renderStats(); renderBrandsPage(); closeModal(); render();
+  } catch(e){
+    console.error(e);
+    toast('Errore salvataggio: '+e.message,'error');
+  }
+  if(btnSave){ btnSave.textContent='Salva'; btnSave.disabled=false; }
 }
 function confirmDelete(id){ if(confirm('Eliminare questa lattina?')) deleteCan(id); }
-function deleteCan(id=editId){ if(!id) return; cans = cans.filter(c=>c.id!==id); saveLocal(); editId=null; closeModal(); closeDetail(); renderBrandNav(); renderStats(); renderBrandsPage(); render(); toast('Lattina eliminata'); }
+async function deleteCan(id=editId){
+  if(!id) return;
+  try {
+    const c = cans.find(x=>x.id===id);
+    if(c?.photoUrl) await fbDeletePhoto(c.photoUrl);
+    await fbDelete(id);
+    cans = cans.filter(c=>c.id!==id);
+    editId=null; closeModal(); closeDetail();
+    renderBrandNav(); renderStats(); renderBrandsPage(); render();
+    toast('Lattina eliminata');
+  } catch(e){ toast('Errore eliminazione','error'); }
+}
 function openDetail(id){
   const c=cans.find(x=>x.id===id); if(!c) return; detailId=id;
   const title=displayName(c);
@@ -1973,8 +2084,8 @@ function closeDetail(){ document.getElementById('detailModal').classList.remove(
 function exportJSON(){ const blob=new Blob([JSON.stringify(cans,null,2)],{type:'application/json'}); downloadBlob(blob,'mycanspro-collection.json'); }
 function exportCSV(){ const headers=['Brand','Prodotto','Variante','Anno','Paese','Volume','Condizione','Categoria','Rarità','Tipo','Valore','Provenienza','Note','Rating']; const rows=cans.map(c=>[c.brand,c.product,c.variant,c.year,c.country,c.volume,c.condition||c.cond,c.category||c.cat,c.rarity,c.collectionType,c.valueEstimate||c.value,c.source,c.notes,c.rating].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')); const blob=new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8;'}); downloadBlob(blob,'mycanspro-collection.csv'); }
 function downloadBlob(blob, filename){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-function importJSON(input){ const file=input.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try { const data=JSON.parse(e.target.result); const incoming = Array.isArray(data) ? data : (Array.isArray(data.cans) ? data.cans : []); cans = [...incoming.map(normalizeCan), ...cans].filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); saveLocal(); renderBrandNav(); renderStats(); renderBrandsPage(); render(); toast('Import completato ✓'); } catch(err){ toast('JSON non valido','error'); } }; reader.readAsText(file); input.value=''; }
-function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione?')){ cans=[]; saveLocal(); renderBrandNav(); renderStats(); renderBrandsPage(); render(); toast('Collezione cancellata'); } }
+function importJSON(input){ const file=input.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=async e=>{ try { const data=JSON.parse(e.target.result); const incoming = Array.isArray(data) ? data : (Array.isArray(data.cans) ? data.cans : []); let count=0; for(const raw of incoming){ const c=normalizeCan(raw); const exists=cans.find(x=>x.id===c.id); if(!exists){ const {id,...rest}=c; const newId=await addDoc(collection(db,COLL),{...rest,addedAt:rest.addedAt||Date.now()}); count++; } } await loadCans(); toast(`Import completato: ${count} nuove lattine ✓`); } catch(err){ toast('JSON non valido','error'); } }; reader.readAsText(file); input.value=''; }
+async function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione? Azione irreversibile.')){ showLoading(true); for(const c of cans){ if(c.photoUrl) await fbDeletePhoto(c.photoUrl); await fbDelete(c.id); } cans=[]; renderBrandNav(); renderStats(); renderBrandsPage(); render(); showLoading(false); toast('Collezione cancellata'); } }
 
 function bindEvents(){
   document.getElementById('searchInput')?.addEventListener('input', render);

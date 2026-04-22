@@ -829,8 +829,12 @@ logo</div>
           <div class="brand-edit-preview-logo" id="brandStylePreviewLogo"><div class="brand-logo-placeholder">BR</div></div>
           <div class="brand-edit-preview-meta">
             <div class="brand-edit-preview-name" id="brandStyleName">Brand</div>
-            <div class="brand-edit-preview-help">Modifica logo e colore di riferimento del brand. Le modifiche verranno applicate a tutte le lattine di questo brand.</div>
+            <div class="brand-edit-preview-help">Modifica nome, logo e colore di riferimento del brand. Le modifiche verranno applicate a tutte le lattine di questo brand.</div>
           </div>
+        </div>
+        <div class="brand-edit-name-row">
+          <label class="field-label" for="brandStyleNameInput">Nome brand</label>
+          <input type="text" id="brandStyleNameInput" class="field-input brand-edit-name-input" placeholder="Nome brand">
         </div>
         <input type="file" id="brandStyleLogoFile" accept="image/*" style="display:none">
         <div class="brand-edit-actions">
@@ -980,6 +984,7 @@ let viewMode = 'grid', activeBrand = 'all', currentPage = 'collection';
 let imageSearchResults = [];
 let selectedImageResult = null;
 let brandStyleEditingName = null;
+let brandStyleOriginalName = null;
 let brandStyleLogo = null;
 let brandStyleColor = "#e3ff00";
 let brandStyleLogoOriginal = null;
@@ -1373,10 +1378,12 @@ function centerBrandStyleLogo(){ updateBrandStyleLogoTransform({ x: 0, y: 0 }); 
 function resetBrandStyleLogoCrop(){ brandStyleLogoTransform = { scale: 1, x: 0, y: 0 }; renderBrandStyleLogoEditor(); }
 function updateBrandStylePreview(){
   const nameEl = document.getElementById('brandStyleName');
+  const nameInput = document.getElementById('brandStyleNameInput');
   const logoEl = document.getElementById('brandStylePreviewLogo');
   const swatchEl = document.getElementById('brandStyleColorSwatch');
   const colorInput = document.getElementById('brandStyleColorInput');
   if(nameEl) nameEl.textContent = brandStyleEditingName || 'Brand';
+  if(nameInput && nameInput.value !== (brandStyleEditingName || '')) nameInput.value = brandStyleEditingName || '';
   if(swatchEl) swatchEl.style.background = brandStyleColor || '#e3ff00';
   if(colorInput) colorInput.value = brandStyleColor || '#e3ff00';
   if(logoEl){
@@ -1390,6 +1397,7 @@ function updateBrandStylePreview(){
 }
 function openBrandStyleEditor(brand){
   if(!brand) return;
+  brandStyleOriginalName = brand;
   brandStyleEditingName = brand;
   brandStyleColor = getBrandColor(brand) || '#e3ff00';
   setBrandStyleLogoEditorSource(getBrandLogo(brand) || null);
@@ -1398,6 +1406,7 @@ function openBrandStyleEditor(brand){
 }
 function closeBrandStyleEditor(){
   document.getElementById('brandStyleModal')?.classList.remove('open');
+  brandStyleOriginalName = null;
 }
 function loadBrandStyleLogo(input){
   const file = input.files?.[0];
@@ -1409,16 +1418,27 @@ function loadBrandStyleLogo(input){
   reader.readAsDataURL(file);
   input.value = '';
 }
+function onBrandStyleNameInput(value){
+  brandStyleEditingName = (value || '').trimStart();
+  updateBrandStylePreview();
+}
 function saveBrandStyle(){
-  if(!brandStyleEditingName) return;
-  const brandKey = normalizeBrandKey(brandStyleEditingName);
+  const nextBrandName = (brandStyleEditingName || '').trim();
+  if(!nextBrandName){ toast('Inserisci il nome del brand','error'); return; }
+  const originalKey = normalizeBrandKey(brandStyleOriginalName || brandStyleEditingName);
+  const nextKey = normalizeBrandKey(nextBrandName);
   let updated = false;
   cans = cans.map(c=>{
-    if(normalizeBrandKey(c.brand) !== brandKey) return c;
+    if(normalizeBrandKey(c.brand) !== originalKey) return c;
     updated = true;
-    return { ...c, brandLogo: brandStyleLogo || null, brandColor: brandStyleColor || '#e3ff00' };
+    return { ...c, brand: nextBrandName, brandLogo: brandStyleLogo || null, brandColor: brandStyleColor || '#e3ff00' };
   });
   if(!updated){ toast('Brand non trovato','error'); return; }
+  if(activeBrand !== 'all' && normalizeBrandKey(activeBrand) === originalKey){
+    activeBrand = nextBrandName;
+  }
+  brandStyleOriginalName = nextBrandName;
+  brandStyleEditingName = nextBrandName;
   saveLocal();
   renderBrandNav();
   renderStats();
@@ -1971,6 +1991,7 @@ function bindEvents(){
   document.getElementById('brandStyleLogoOffsetX')?.addEventListener('input', e=>updateBrandStyleLogoTransform({ x: Number(e.target.value || 0) }));
   document.getElementById('brandStyleLogoOffsetY')?.addEventListener('input', e=>updateBrandStyleLogoTransform({ y: Number(e.target.value || 0) }));
   document.getElementById('brandStyleColorInput')?.addEventListener('input', e=>{ brandStyleColor = e.target.value || '#e3ff00'; updateBrandStylePreview(); });
+  document.getElementById('brandStyleNameInput')?.addEventListener('input', e=>onBrandStyleNameInput(e.target.value));
   document.getElementById('importFile')?.addEventListener('change', e=>importJSON(e.target));
   document.getElementById('grid')?.addEventListener('click', e=>{
     const editBtn = e.target.closest('[data-edit-id]');
@@ -2035,7 +2056,7 @@ function bindEvents(){
   window.addEventListener('orientationchange', updateMobileLayout);
 }
 
-window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.openBrandStyleEditor=openBrandStyleEditor; window.saveBrandStyle=saveBrandStyle; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.onBrandColorInput=onBrandColorInput; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
+window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.openBrandStyleEditor=openBrandStyleEditor; window.onBrandStyleNameInput=onBrandStyleNameInput; window.saveBrandStyle=saveBrandStyle; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.onBrandColorInput=onBrandColorInput; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll;
 
 document.addEventListener('DOMContentLoaded', ()=>{
   injectHomeScreenAssets();

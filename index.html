@@ -234,7 +234,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .detail-note-empty{color:var(--text3);font-style:italic}
 .detail-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
 .detail-tag{padding:4px 12px;border-radius:20px;font-size:11px;background:var(--bg4);color:var(--text2);border:1px solid var(--line)}
-.detail-footer{display:flex;gap:8px;justify-content:flex-end}
+.detail-footer{display:flex;gap:8px;justify-content:space-between;align-items:center}
 .stars-display{display:flex;gap:3px}
 .stars-display .s{font-size:14px;color:var(--text3)}
 .stars-display .s.on{color:#f5c518}
@@ -303,7 +303,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .grid.compact-view .card:hover{transform:none;background:var(--bg3)}
 .grid.compact-view .card-img{width:52px;height:52px;flex-shrink:0;border-radius:0}
 .grid.compact-view .card-img .img-overlay{display:none}
-.grid.compact-view .card-overlay{display:none}
+.grid.compact-view .card-overlay{display:flex;opacity:1;top:50%;right:8px;transform:translateY(-50%)}
+.grid.compact-view .card-overlay-btn{width:26px;height:26px;background:var(--bg3);border-color:var(--line)}
 .grid.compact-view .card-body{padding:8px 12px;flex:1;display:flex;align-items:center;gap:0;min-width:0}
 .grid.compact-view .card-info-wrap{flex:1;min-width:0}
 .grid.compact-view .card-brand{font-size:9px;letter-spacing:1.5px;margin-bottom:1px}
@@ -408,8 +409,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .detail-content{padding:14px}
   .detail-hero-img,.detail-hero-placeholder{height:200px}
   .detail-hero-name{font-size:19px}
-  .detail-footer{flex-direction:column-reverse;gap:8px}
-  .detail-footer .btn{width:100%;justify-content:center}
+  .detail-footer{flex-direction:row;flex-wrap:wrap;gap:8px}
+  .detail-footer .btn-primary{flex:1;justify-content:center;min-height:40px}
+  .detail-footer .btn-ghost{justify-content:center}
+  .detail-footer .btn-danger{justify-content:center}
 
   /* ── Modal ── */
   .modal,.detail-modal{max-width:100%;max-height:93dvh;border-radius:18px 18px 0 0;margin-top:auto}
@@ -711,7 +714,7 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
 </main>
 
 <!-- ADD/EDIT MODAL -->
-<div class="modal-bg" id="addModal">
+<div class="modal-bg" id="addModal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="modal-header">
       <h2 id="modalTitle">Nuova Lattina</h2>
@@ -719,7 +722,13 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
     </div>
     <div class="modal-body">
       <div class="field">
-        <label>Foto</label>
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Foto</span>
+          <button type="button" id="clearImageBtn" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px;height:auto">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg>
+            Rimuovi
+          </button>
+        </label>
         <div class="photo-drop" id="photoDrop">
           <div class="photo-drop-label">
             <div class="icon">📸</div>
@@ -882,15 +891,15 @@ logo</div>
       <div class="field"><label>Note</label><textarea id="fNotes" placeholder="Provenienza, storia, curiosità, dettagli particolari..."></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" id="btnDel" style="display:none;margin-right:auto" type="button">Elimina</button>
+      <button class="btn btn-danger btn-sm" id="btnDel" style="display:none;margin-right:auto" type="button" onclick="event.stopPropagation();deleteCan()">Elimina</button>
       <button class="btn btn-ghost" id="cancelModalBtn" type="button">Annulla</button>
-      <button class="btn btn-primary" id="saveCanBtn" type="button">Salva</button>
+      <button class="btn btn-primary" id="saveCanBtn" type="button" onclick="event.stopPropagation();saveCan()">Salva</button>
     </div>
   </div>
 </div>
 
 <!-- DETAIL MODAL -->
-<div class="modal-bg" id="detailModal">
+<div class="modal-bg" id="detailModal" onclick="if(event.target===this)closeDetail()">
   <div class="detail-modal">
     <div class="detail-hero" id="dHero"></div>
     <div class="detail-content">
@@ -898,11 +907,15 @@ logo</div>
       <div id="dNoteWrap"></div>
       <div class="detail-tags" id="dTags"></div>
       <div class="detail-footer">
-        <button class="btn btn-ghost btn-sm" id="editFromDetailBtn" type="button">
+        <button class="btn btn-danger btn-sm" id="deleteFromDetailBtn" type="button" onclick="event.stopPropagation();if(window._detailId&&confirm('Eliminare questa lattina?')){window.deleteCan(window._detailId);window.closeDetail();}">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10"/></svg>
+          Elimina
+        </button>
+        <button class="btn btn-ghost btn-sm" id="closeDetailBtn" type="button" onclick="event.stopPropagation();closeDetail()">Chiudi</button>
+        <button class="btn btn-primary btn-sm" id="editFromDetailBtn" type="button" onclick="event.stopPropagation();editFromDetail()">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
           Modifica
         </button>
-        <button class="btn btn-ghost btn-sm" id="closeDetailBtn" type="button">Chiudi</button>
       </div>
     </div>
   </div>
@@ -1121,7 +1134,8 @@ const imageSearchConfig = {
 
 let cans = [];
 let currentPhoto = null, currentPhotoChanged = false;
-let currentBrandLogo = null, currentBrandLogoChanged = false;
+let currentBrandLogo = null, currentBrandLogoOriginal = null, currentBrandLogoChanged = false;
+let currentBrandLogoTransform = { scale: 1, x: 0, y: 0 };
 let currentBrandColor = "#e3ff00", currentBrandColorChanged = false;
 let editId = null, detailId = null, currentRating = 0;
 let viewMode = 'compact', activeBrand = 'all', currentPage = 'collection';
@@ -1356,12 +1370,12 @@ function render(){
     const stars = c.rating ? `<div class="stars-display">${starsHtml(c.rating,true)}</div>` : '';
     return `<div class="card" style="animation-delay:${i*0.03}s" data-open-detail="${c.id}">
       <div class="card-overlay">
-        <div class="card-overlay-btn" data-edit-id="${c.id}" title="Modifica">
+        <button class="card-overlay-btn" data-edit-id="${c.id}" title="Modifica" type="button">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
-        </div>
-        <div class="card-overlay-btn" data-delete-id="${c.id}" title="Elimina">
+        </button>
+        <button class="card-overlay-btn" data-delete-id="${c.id}" title="Elimina" type="button">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10"/></svg>
-        </div>
+        </button>
       </div>
       <div class="card-img">${img}<div class="img-overlay"></div></div>
       <div class="card-body">
@@ -1680,7 +1694,7 @@ function renderBrandsPage(){
 }
 
 function openAdd(){
-  editId=null; currentPhoto=null; currentPhotoChanged=false; currentBrandLogo=null; currentBrandLogoChanged=false; currentBrandColor='#e3ff00'; currentBrandColorChanged=false; currentRating=0;
+  editId=null; currentPhoto=null; currentPhotoChanged=false; currentBrandLogo=null; currentBrandLogoOriginal=null; currentBrandLogoTransform={ scale: 1, x: 0, y: 0 }; currentBrandLogoChanged=false; currentBrandColor='#e3ff00'; currentBrandColorChanged=false; currentRating=0;
   resetImageSearchResults();
   setImageSearchStatus('Puoi caricare una foto manualmente oppure usare “Trova immagine” per cercare immagini online.');
   document.getElementById('modalTitle').textContent='Nuova Lattina';
@@ -1690,8 +1704,10 @@ function openAdd(){
   document.getElementById('addModal').classList.add('open');
 }
 function openEdit(id){
-  const c=cans.find(x=>x.id===id); if(!c) return;
-  editId=id; currentPhoto=null; currentPhotoChanged=false; currentBrandLogo=null; currentBrandLogoChanged=false; currentBrandColor=c.brandColor||getBrandColor(c.brand)||'#e3ff00'; currentBrandColorChanged=false; currentRating=c.rating||0;
+  console.log('[openEdit] called with id:', id, 'cans.length:', cans.length, 'found:', !!cans.find(x=>x.id===id));
+  const c=cans.find(x=>x.id===id); 
+  if(!c){ console.warn('[openEdit] can not found! id=', id, 'available ids:', cans.map(x=>x.id)); return; }
+  editId=id; currentPhoto=null; currentPhotoChanged=false; currentBrandLogo=null; currentBrandLogoOriginal=null; currentBrandLogoTransform={ scale: 1, x: 0, y: 0 }; currentBrandLogoChanged=false; currentBrandColor=c.brandColor||getBrandColor(c.brand)||'#e3ff00'; currentBrandColorChanged=false; currentRating=c.rating||0;
   resetImageSearchResults();
   setImageSearchStatus('Puoi mantenere la foto attuale, sostituirla manualmente o cercarne una nuova.');
   document.getElementById('modalTitle').textContent='Modifica Lattina';
@@ -1713,12 +1729,22 @@ function openEdit(id){
   setBrandLogoEditorSource(c.brandLogo || getBrandLogo(c.brand), false);
   setBrandColorInput(c.brandColor || getBrandColor(c.brand) || '#e3ff00');
   if(c.photoUrl){
-    document.getElementById('photoDrop').innerHTML=`<img src="${c.photoUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+    document.getElementById('photoDrop').innerHTML=`<img src="${c.photoUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:10px"><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(14,14,15,.7);color:#fff;font-size:10px;text-align:center;padding:4px;border-radius:0 0 10px 10px;letter-spacing:.5px">TAP PER CAMBIARE</div>`;
+    document.getElementById('photoDrop').style.position='relative';
   } else resetPhoto();
-  document.getElementById('addModal').classList.add('open');
+  const modal = document.getElementById('addModal');
+  modal.classList.add('open');
+  requestAnimationFrame(()=>{ const body = modal.querySelector('.modal-body'); if(body) body.scrollTop=0; });
 }
 function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
-function editFromDetail(){ closeDetail(); if(detailId) openEdit(detailId); }
+function editFromDetail(){
+  const idToEdit = detailId;
+  window._detailId = detailId;
+  console.log('[editFromDetail] detailId:', detailId, 'idToEdit:', idToEdit, 'cans.length:', cans.length);
+  closeDetail();
+  if(idToEdit) openEdit(idToEdit);
+  else console.warn('[editFromDetail] idToEdit is null/undefined!');
+}
 function resetPhoto(){ document.getElementById('photoDrop').innerHTML=`<div class="photo-drop-label"><div class="icon">📸</div><p>Clicca per caricare</p><span>JPG, PNG, WEBP</span></div>`; }
 function updateBrandLogoPreview(src){
   const preview = document.getElementById('brandLogoPreview');
@@ -2196,7 +2222,7 @@ async function deleteCan(id=editId){
   } catch(e){ toast('Errore eliminazione','error'); }
 }
 function openDetail(id){
-  const c=cans.find(x=>x.id===id); if(!c) return; detailId=id;
+  const c=cans.find(x=>x.id===id); if(!c){ console.warn('[openDetail] not found:', id); return; } detailId=id; window._detailId=id; console.log('[openDetail] opened id:', id, 'brand:', c.brand);
   const title=displayName(c);
   const detailBrand = `<div class="detail-hero-brand" style="display:flex;align-items:center;gap:8px">${getBrandLogoHtml(c.brand, c.brandLogo, c.brandColor)}<span>${c.brand||''}</span></div>`;
   document.getElementById('dHero').innerHTML = c.photoUrl ? `<img class="detail-hero-img" src="${c.photoUrl}" alt="${title}"><div class="detail-hero-overlay">${detailBrand}<div class="detail-hero-name">${title}</div></div>` : `<div class="detail-hero-placeholder">🥫</div><div class="detail-hero-overlay">${detailBrand}<div class="detail-hero-name">${title}</div></div>`;
@@ -2255,19 +2281,21 @@ function bindEvents(){
     e.preventDefault();
     openBrandFromList(btn.dataset.openBrand);
   });
-  document.getElementById('addModal')?.addEventListener('click', e=>{ if(e.target.id==='addModal') closeModal(); });
-  document.getElementById('detailModal')?.addEventListener('click', e=>{ if(e.target.id==='detailModal') closeDetail(); });
+
   document.getElementById('brandStyleModal')?.addEventListener('click', e=>{ if(e.target.id==='brandStyleModal') closeBrandStyleEditor(); });
+  // backdrop clicks handled below
   document.addEventListener('click', e=>{
-    const t = e.target.closest('button, a, .star, .photo-drop, .nav-item, .bnav-item');
+    const t = e.target.closest('button, a, .star, .photo-drop, .nav-item, .bnav-item, .card-overlay-btn');
     if(!t) return;
+    if(t.dataset.editId){ e.preventDefault(); e.stopPropagation(); openEdit(t.dataset.editId); return; }
+    if(t.dataset.deleteId){ e.preventDefault(); e.stopPropagation(); confirmDelete(t.dataset.deleteId); return; }
     if(t.matches('.nav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view, t); return; }
     if(t.matches('.bnav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view); return; }
     if(t.id === 'menuBtn'){ e.preventDefault(); toggleSidebar(); return; }
     if(t.id === 'compactBtn'){ e.preventDefault(); setView('compact'); return; }
     if(t.id === 'gridBtn'){ e.preventDefault(); setView('grid'); return; }
     if(t.id === 'listBtn'){ e.preventDefault(); setView('list'); return; }
-    if(t.id === 'topAddBtn' || t.id === 'emptyAddBtn' || t.id === 'mobileAddBtn'){ e.preventDefault(); openAdd(); return; }
+    if(t.id === 'emptyAddBtn' || t.id === 'mobileAddBtn'){ e.preventDefault(); openAdd(); return; }
     if(t.id === 'findImageBtn'){ e.preventDefault(); findCanImage(); return; }
     if(t.id === 'clearImageBtn'){ e.preventDefault(); clearSelectedImage(); return; }
     if(t.id === 'uploadBrandLogoBtn'){ e.preventDefault(); document.getElementById('brandLogoFile')?.click(); return; }
@@ -2285,13 +2313,23 @@ function bindEvents(){
     if(t.id === 'exportJsonBtn'){ e.preventDefault(); exportJSON(); return; }
     if(t.id === 'exportCsvBtn'){ e.preventDefault(); exportCSV(); return; }
     if(t.id === 'clearAllBtn'){ e.preventDefault(); clearAll(); return; }
-    if(t.id === 'closeAddModalBtn' || t.id === 'cancelModalBtn'){ e.preventDefault(); closeModal(); return; }
-    if(t.id === 'saveCanBtn'){ e.preventDefault(); saveCan(); return; }
-    if(t.id === 'btnDel'){ e.preventDefault(); deleteCan(); return; }
-    if(t.id === 'editFromDetailBtn'){ e.preventDefault(); editFromDetail(); return; }
-    if(t.id === 'closeDetailBtn'){ e.preventDefault(); closeDetail(); return; }
+    // modal close buttons handled by direct listener above
+    // saveCanBtn handled by direct listener above
+    // btnDel handled by direct listener above
+    // editFromDetailBtn handled by direct listener above
+    // deleteFromDetailBtn handled by direct listener above
+    // closeDetailBtn handled by direct listener above
     if(t.classList.contains('star')){ e.preventDefault(); setRating(Number(t.dataset.v || 0)); return; }
-  }, true);
+  }, false);
+  // Direct listeners on modal action buttons — bypasses all bubbling issues
+
+
+
+
+
+
+
+
   document.getElementById('sidebarOverlay')?.addEventListener('click', ()=>toggleSidebar(false), true);
   window.addEventListener('resize', updateMobileLayout);
   window.addEventListener('orientationchange', updateMobileLayout);

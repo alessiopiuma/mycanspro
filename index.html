@@ -1029,7 +1029,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC46Mh3TzeFUfsegiaFRwQ1sYtQKjQnqcc",
   authDomain: "mycanspro.firebaseapp.com",
   projectId: "mycanspro",
-  storageBucket: "mycanspro.firebasestorage.app",
+  storageBucket: "mycanspro.appspot.com",
   messagingSenderId: "66714134251",
   appId: "1:66714134251:web:90e2777d1be6b3347b00ae"
 };
@@ -1057,7 +1057,7 @@ async function fbUploadPhoto(base64, oldUrl){
     const url = await getDownloadURL(sRef);
     if(oldUrl) try{ await deleteObject(storageRef(storage, oldUrl)); }catch(e){}
     return url;
-  } catch(e){ console.error('Upload foto:', e); return null; }
+  } catch(e){ console.error('Upload foto:', e); toast('Upload foto bloccato. Controlla bucket/rules/CORS Firebase','error'); return null; }
 }
 
 async function fbDeletePhoto(url){

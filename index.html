@@ -1023,19 +1023,17 @@ logo</div>
 // ─── FIREBASE ──────────────────────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC46Mh3TzeFUfsegiaFRwQ1sYtQKjQnqcc",
   authDomain: "mycanspro.firebaseapp.com",
   projectId: "mycanspro",
-  storageBucket: "mycanspro.appspot.com",
+  storageBucket: "mycanspro.firebasestorage.app",
   messagingSenderId: "66714134251",
   appId: "1:66714134251:web:90e2777d1be6b3347b00ae"
 };
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
-const storage = getStorage(fbApp);
 const COLL = 'lattine';
 
 // ─── FIREBASE HELPERS ──────────────────────────────────────────────
@@ -1052,17 +1050,13 @@ async function fbLoadCans(){
 
 async function fbUploadPhoto(base64, oldUrl){
   try {
-    const sRef = storageRef(storage, `lattine/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`);
-    await uploadString(sRef, base64, 'data_url');
-    const url = await getDownloadURL(sRef);
-    if(oldUrl) try{ await deleteObject(storageRef(storage, oldUrl)); }catch(e){}
-    return url;
-  } catch(e){ console.error('Upload foto:', e); toast('Upload foto bloccato. Controlla bucket/rules/CORS Firebase','error'); return null; }
+    if(!base64) return null;
+    return base64;
+  } catch(e){ console.error('Salvataggio foto inline:', e); return null; }
 }
 
 async function fbDeletePhoto(url){
-  if(!url) return;
-  try{ await deleteObject(storageRef(storage, url)); }catch(e){}
+  return;
 }
 
 async function fbSave(canData, isNew){
@@ -2162,7 +2156,7 @@ async function saveCan(){
     const oldCan = editId ? cans.find(c=>c.id===editId) : null;
     const oldPhotoUrl = oldCan?.photoUrl || null;
 
-    // Upload foto se cambiata
+    // Salva foto inline nel documento se cambiata
     if(currentPhotoChanged && currentPhoto){
       const newUrl = await fbUploadPhoto(currentPhoto, oldPhotoUrl);
       if(newUrl) data.photoUrl = newUrl;

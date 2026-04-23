@@ -69,6 +69,15 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
 .topbar{padding:20px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:40;backdrop-filter:blur(12px)}
 .topbar-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--text);flex-shrink:0}
+.btn-back{display:none;align-items:center;gap:6px;white-space:nowrap}
+.card-check-btn{position:absolute;top:12px;left:12px;width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(10,10,12,.72);color:rgba(255,255,255,.72);display:flex;align-items:center;justify-content:center;z-index:3;transition:transform .15s ease, background .15s ease, color .15s ease, border-color .15s ease;backdrop-filter:blur(8px)}
+.card-check-btn:hover{transform:scale(1.05);color:#fff}
+.card-check-btn.active{background:rgba(61,220,132,.18);border-color:rgba(61,220,132,.6);color:var(--green)}
+.card-check-btn svg{pointer-events:none}
+.detail-check-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--bg3);font-size:12px;color:var(--text2);margin-top:14px}
+.detail-check-pill.is-owned{color:var(--green);border-color:rgba(61,220,132,.45);background:rgba(61,220,132,.08)}
+@media (max-width: 900px){.btn-back span{display:none}}
+
 .topbar-brand{display:none;align-items:baseline;gap:0;line-height:1;white-space:nowrap;min-width:0}
 .topbar-brand .logo-my,.topbar-brand .logo-cans,.topbar-brand .logo-pro{font-size:20px}
 .topbar-brand .logo-pro{margin-left:2px}
@@ -585,6 +594,10 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
     <button class="btn btn-ghost btn-menu" id="menuBtn" title="Menu" type="button">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
     </button>
+    <button class="btn btn-ghost btn-back" id="backBtn" title="Indietro" type="button" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3L4 8l6 5"/><path d="M5 8h7"/></svg>
+      <span>Indietro</span>
+    </button>
     <div class="topbar-brand" aria-label="myCansPRO">
       <span class="logo-my">my</span><span class="logo-cans">Cans</span><span class="logo-pro">PRO</span>
     </div>
@@ -635,7 +648,7 @@ button,a,[role="button"],input,select,textarea,.photo-drop,.card-overlay-btn,.im
       <div class="empty-icon">🥫</div>
       <h3>Nessuna lattina trovata</h3>
       <p>Inizia ad aggiungere la tua collezione oppure modifica i filtri di ricerca</p>
-      <button class="btn btn-primary" id="topAddBtn" type="button">Aggiungi la prima</button>
+      <button class="btn btn-primary" id="emptyAddBtn" type="button">Aggiungi la prima</button>
     </div>
   </div>
 
@@ -1280,7 +1293,8 @@ function normalizeCan(raw){
     value: valueEstimate,
     addedAt: raw.addedAt || Date.now(),
     photoUrl: raw.photoUrl || raw.photo || null,
-    rating: Number(raw.rating || 0)
+    rating: Number(raw.rating || 0),
+    collected: Boolean(raw.collected || raw.checked || raw.inCollection || raw.owned)
   };
 }
 
@@ -1363,7 +1377,13 @@ function render(){
     const flags = [c.category || c.cat, c.rarity, c.collectionType, c.country].filter(Boolean).map(f=>`<span class="flag">${f}</span>`).join('');
     const stars = c.rating ? `<div class="stars-display">${starsHtml(c.rating,true)}</div>` : '';
     return `<div class="card" style="animation-delay:${i*0.03}s" data-open-detail="${c.id}">
+      <button class="card-check-btn ${c.collected ? 'active' : ''}" data-toggle-collected="${c.id}" title="${c.collected ? 'In collezione' : 'Segna in collezione'}" type="button" aria-label="${c.collected ? 'In collezione' : 'Segna in collezione'}">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3 3L13 4.5"/></svg>
+      </button>
       <div class="card-overlay">
+        <button class="card-overlay-btn" data-duplicate-id="${c.id}" title="Duplica" type="button">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8" height="8" rx="1"/><path d="M3 11H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v1"/></svg>
+        </button>
         <button class="card-overlay-btn" data-edit-id="${c.id}" title="Modifica" type="button">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
         </button>
@@ -1439,6 +1459,8 @@ function showView(v, triggerEl=null){
   document.getElementById('viewIo').style.display = v==='io' ? 'block' : 'none';
   document.getElementById('searchArea').style.display = v==='collection' ? 'block' : 'none';
   document.getElementById('topbarActions').style.display = v==='collection' ? 'flex' : 'none';
+  const backBtn = document.getElementById('backBtn');
+  if(backBtn) backBtn.style.display = v==='collection' ? 'none' : 'inline-flex';
   const titles = {collection:'Collezione', stats:'Statistiche', brands:'Brand', io:'Import / Export'};
   document.getElementById('viewTitle').textContent = titles[v] || 'Collezione';
   if(v==='stats') renderStats();
@@ -2142,10 +2164,46 @@ function collectFormData(){
     collectionType: document.getElementById('fCollectionType').value,
     rating: currentRating,
     notes: document.getElementById('fNotes').value.trim(),
+    collected: editId ? Boolean(cans.find(x=>x.id===editId)?.collected) : false,
     photoUrl: currentPhotoChanged ? currentPhoto : ((editId && cans.find(x=>x.id===editId)?.photoUrl) || null),
     addedAt: editId ? (cans.find(x=>x.id===editId)?.addedAt || Date.now()) : Date.now()
   });
 }
+function photoUsedElsewhere(url, excludeId=null){
+  if(!url) return false;
+  return cans.some(c=>c.id!==excludeId && c.photoUrl===url);
+}
+async function duplicateCan(id){
+  const original = cans.find(c=>c.id===id);
+  if(!original) return;
+  const copy = normalizeCan({ ...original, id: safeId(), addedAt: Date.now(), collected: Boolean(original.collected) });
+  try {
+    await fbSave(copy, true);
+    cans.unshift(copy);
+    renderBrandNav(); renderStats(); renderBrandsPage(); render(); updateBnavCounts();
+    toast('Lattina duplicata ✓');
+    setFirebaseStatus('online', cans.length + ' lattine');
+  } catch(e){
+    console.error(e);
+    toast('Errore duplicazione','error');
+  }
+}
+async function toggleCollected(id){
+  const current = cans.find(c=>c.id===id);
+  if(!current) return;
+  const updated = normalizeCan({ ...current, collected: !current.collected });
+  try {
+    await fbSave(updated, false);
+    cans = cans.map(c=>c.id===id ? updated : c);
+    render();
+    if(detailId===id){ openDetail(id); }
+    toast(updated.collected ? 'Segnata in collezione ✓' : 'Spunta rimossa');
+  } catch(e){
+    console.error(e);
+    toast('Errore aggiornamento','error');
+  }
+}
+
 async function saveCan(){
   const data = collectFormData();
   if(!data.brand || !data.product || !data.variant){ toast('Brand, prodotto e variante sono obbligatori','error'); return; }
@@ -2161,7 +2219,7 @@ async function saveCan(){
       const newUrl = await fbUploadPhoto(currentPhoto, oldPhotoUrl);
       if(newUrl) data.photoUrl = newUrl;
     } else if(currentPhotoChanged && !currentPhoto){
-      await fbDeletePhoto(oldPhotoUrl);
+      if(!photoUsedElsewhere(oldPhotoUrl, editId)) await fbDeletePhoto(oldPhotoUrl);
       data.photoUrl = null;
     } else {
       data.photoUrl = oldPhotoUrl;
@@ -2205,7 +2263,7 @@ async function deleteCan(id=editId){
   if(!id) return;
   try {
     const c = cans.find(x=>x.id===id);
-    if(c?.photoUrl) await fbDeletePhoto(c.photoUrl);
+    if(c?.photoUrl && !photoUsedElsewhere(c.photoUrl, id)) await fbDeletePhoto(c.photoUrl);
     await fbDelete(id);
     cans = cans.filter(c=>c.id!==id);
     editId=null; closeModal(); closeDetail();
@@ -2225,7 +2283,7 @@ function openDetail(id){
     ['Condizione', c.condition||c.cond||'—', ''], ['Categoria', c.category||c.cat||'—', ''], ['Rarità', c.rarity||'—', ''],
     ['Tipo', c.collectionType||'—', ''], ['Valore',(c.valueEstimate||c.value)?('€'+(c.valueEstimate||c.value)):'—','accent'], ['Rating', c.rating ? starsHtml(c.rating) : '—', '']
   ].map(([k,v,cls])=>`<div class="detail-item"><div class="detail-item-key">${k}</div><div class="detail-item-val ${cls}">${v}</div></div>`).join('');
-  document.getElementById('dNoteWrap').innerHTML = `<div class="detail-note ${c.notes?'':'detail-note-empty'}">${c.notes || 'Nessuna nota disponibile.'}</div>`;
+  document.getElementById('dNoteWrap').innerHTML = `<div class="detail-note ${c.notes?'':'detail-note-empty'}">${c.notes || 'Nessuna nota disponibile.'}</div><div class="detail-check-pill ${c.collected ? 'is-owned' : ''}"><span>${c.collected ? '✓ Presente in collezione' : 'Non ancora spuntata in collezione'}</span></div>`;
   document.getElementById('dTags').innerHTML = [c.brand,c.product,c.variant,c.country,c.category||c.cat,c.rarity,c.collectionType].filter(Boolean).map(t=>`<span class="detail-tag">${t}</span>`).join('');
   document.getElementById('detailModal').classList.add('open');
 }
@@ -2238,6 +2296,8 @@ async function clearAll(){ if(confirm('Vuoi cancellare tutta la collezione? Azio
 
 function bindEvents(){
   document.getElementById('searchInput')?.addEventListener('input', render);
+  document.querySelectorAll('#topAddBtn, #emptyAddBtn').forEach(btn=>btn.addEventListener('click', openAdd));
+  document.getElementById('backBtn')?.addEventListener('click', ()=>showView('collection'));
   document.getElementById('sortSel')?.addEventListener('change', render);
   document.getElementById('photoFile')?.addEventListener('change', e=>loadPhoto(e.target));
   document.getElementById('brandLogoFile')?.addEventListener('change', e=>loadBrandLogo(e.target));
@@ -2254,6 +2314,10 @@ function bindEvents(){
   document.getElementById('brandStyleNameInput')?.addEventListener('input', e=>onBrandStyleNameInput(e.target.value));
   document.getElementById('importFile')?.addEventListener('change', e=>importJSON(e.target));
   document.getElementById('grid')?.addEventListener('click', e=>{
+    const checkBtn = e.target.closest('[data-toggle-collected]');
+    if(checkBtn){ e.preventDefault(); e.stopPropagation(); toggleCollected(checkBtn.dataset.toggleCollected); return; }
+    const duplicateBtn = e.target.closest('[data-duplicate-id]');
+    if(duplicateBtn){ e.preventDefault(); e.stopPropagation(); duplicateCan(duplicateBtn.dataset.duplicateId); return; }
     const editBtn = e.target.closest('[data-edit-id]');
     if(editBtn){ e.preventDefault(); e.stopPropagation(); openEdit(editBtn.dataset.editId); return; }
     const deleteBtn = e.target.closest('[data-delete-id]');
@@ -2281,6 +2345,8 @@ function bindEvents(){
   document.addEventListener('click', e=>{
     const t = e.target.closest('button, a, .star, .photo-drop, .nav-item, .bnav-item, .card-overlay-btn');
     if(!t) return;
+    if(t.dataset.toggleCollected){ e.preventDefault(); e.stopPropagation(); toggleCollected(t.dataset.toggleCollected); return; }
+    if(t.dataset.duplicateId){ e.preventDefault(); e.stopPropagation(); duplicateCan(t.dataset.duplicateId); return; }
     if(t.dataset.editId){ e.preventDefault(); e.stopPropagation(); openEdit(t.dataset.editId); return; }
     if(t.dataset.deleteId){ e.preventDefault(); e.stopPropagation(); confirmDelete(t.dataset.deleteId); return; }
     if(t.matches('.nav-item[data-view]')){ e.preventDefault(); showView(t.dataset.view, t); return; }
@@ -2329,7 +2395,7 @@ function bindEvents(){
   window.addEventListener('orientationchange', updateMobileLayout);
 }
 
-window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.openBrandStyleEditor=openBrandStyleEditor; window.onBrandStyleNameInput=onBrandStyleNameInput; window.saveBrandStyle=saveBrandStyle; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.onBrandColorInput=onBrandColorInput; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll; window.updateBnavCounts=updateBnavCounts; window.setFirebaseStatus=setFirebaseStatus;
+window.openAdd=openAdd; window.openEdit=openEdit; window.openDetail=openDetail; window.openBrandFromList=openBrandFromList; window.openBrandStyleEditor=openBrandStyleEditor; window.onBrandStyleNameInput=onBrandStyleNameInput; window.saveBrandStyle=saveBrandStyle; window.closeModal=closeModal; window.closeDetail=closeDetail; window.editFromDetail=editFromDetail; window.saveCan=saveCan; window.deleteCan=deleteCan; window.confirmDelete=confirmDelete; window.duplicateCan=duplicateCan; window.toggleCollected=toggleCollected; window.setView=setView; window.showView=showView; window.toggleSidebar=toggleSidebar; window.closeSidebarMobile=closeSidebarMobile; window.setRating=setRating; window.loadPhoto=loadPhoto; window.loadBrandLogo=loadBrandLogo; window.clearBrandLogo=clearBrandLogo; window.onBrandColorInput=onBrandColorInput; window.findCanImage=findCanImage; window.searchCanImage=findCanImage; window.selectImageResult=selectImageResult; window.clearSelectedImage=clearSelectedImage; window.removePhoto=clearSelectedImage; window.exportJSON=exportJSON; window.exportCSV=exportCSV; window.importJSON=importJSON; window.clearAll=clearAll; window.updateBnavCounts=updateBnavCounts; window.setFirebaseStatus=setFirebaseStatus;
 
 document.addEventListener('DOMContentLoaded', ()=>{
   injectHomeScreenAssets();

@@ -2178,7 +2178,8 @@ async function duplicateCan(id){
   if(!original) return;
   const copy = normalizeCan({ ...original, id: safeId(), addedAt: Date.now(), collected: Boolean(original.collected) });
   try {
-    await fbSave(copy, true);
+    const newId = await fbSave(copy, true);
+    copy.id = newId;
     cans.unshift(copy);
     renderBrandNav(); renderStats(); renderBrandsPage(); render(); updateBnavCounts();
     toast('Lattina duplicata ✓');
